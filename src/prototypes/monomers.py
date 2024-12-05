@@ -17,21 +17,6 @@ monomer_df_filepath = files(path).joinpath(monomer_lib)
 
 
 sdf_file = monomer_df_filepath
-df_group = PandasTools.LoadSDF(sdf_file)
-
-groups = ['m_Rgroups', 'm_RgroupIdx', 'm_attachmentPointIdx']
-for idx in df_group.index:
-    for group in groups:
-        change = df_group[group][idx].split(SequenceConstants.csv_separator)
-        if group == 'm_Rgroups':
-            updated_change = [None if v == 'None' else v for v in change]
-        else:
-            updated_change = [None if v == 'None' else int(v) for v in
-                                change]
-        df_group.loc[idx, group] = updated_change
-df_group = df_group.set_index('symbol')
-df_group = df_group.rename(columns={"ROMol": "m_romol"})
-
 
 
 # Load the SDF file
@@ -53,3 +38,13 @@ for group in groups:
 
 # Set the index and rename the column
 df_group = df_group.set_index('symbol').rename(columns={"ROMol": "m_romol"})
+
+
+resnames = ['A', 'G', 'Q', 'K', 'I']
+
+# Filter rows where the index is in self._resnames
+filtered_df = df_group[df_group.index.isin(resnames)]
+
+# Apply the transformation only on the filtered rows
+for group in groups:
+    df_group.loc[filtered_df.index, group] = filtered_df.apply(lambda row: process_column(row, group), axis=1)

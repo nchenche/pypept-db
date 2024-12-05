@@ -23,6 +23,7 @@ import sys
 import copy
 import re
 import os
+from typing import Iterable
 import warnings
 
 import string
@@ -84,6 +85,7 @@ class Sequence:
         self.s_monomers = []
         self.s_nmonomers = 0
         self.__is_valid = True
+        self._resnames = []
 
         seq = split_outside(self.s_inputbiln,
                             by_element=SequenceConstants.monomer_join,
@@ -100,7 +102,8 @@ class Sequence:
         if monomer_df_filepath.is_file() is False:
             monomer_df_filepath = default_monomer_df_filepath
 
-        self.monomer_df = get_monomer_info(str(monomer_df_filepath))
+        unique_residues = set(self.s_biln.replace(".", "-").split("-"))
+        self.monomer_df = get_monomer_info(str(monomer_df_filepath), include_res=unique_residues)
 
         try:
             # Parse the BILN sequence
@@ -512,7 +515,7 @@ class Sequence:
 # Additional functions
 ##########################################################################
 
-def get_monomer_info(path):
+def get_monomer_info(path, include_res: Iterable=[]):
     """
     Convert a monomer SDF file to a Pandas dataframe object.
 
@@ -523,6 +526,12 @@ def get_monomer_info(path):
     """
     # Load the SDF file
     df_group = PandasTools.LoadSDF(path)
+
+    # Filter rows where the index is in include_res
+    if include_res:
+        df_group = df_group[df_group['symbol'].isin(include_res)]
+
+    # print(df_group)
 
     # Define the groups to process
     groups = ['m_Rgroups', 'm_RgroupIdx', 'm_attachmentPointIdx']
@@ -724,7 +733,7 @@ def get_monomer_codes(df_name):
 
 ############################################################
 
-def correct_pdb_atoms(seq, path=SequenceConstants.def_path,
+def correct_pdb_atoms(seq: Sequence, path=SequenceConstants.def_path,
                       monomer_lib=SequenceConstants.def_lib_filename):
     """
     Pipeline to assign the correct atom names to the pyPept object
@@ -744,8 +753,8 @@ def correct_pdb_atoms(seq, path=SequenceConstants.def_path,
     if monomer_df_filepath.is_file() is False:
         monomer_df_filepath = default_monomer_df_filepath
 
-    new_df = get_monomer_info(str(monomer_df_filepath))
-
+    unique_residues = set(seq.s_biln.replace(".", "-").split("-"))
+    new_df = get_monomer_info(str(monomer_df_filepath), include_res=unique_residues)
 
     # Get monomer codes
     monomers = get_monomer_codes(new_df)

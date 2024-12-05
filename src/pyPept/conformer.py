@@ -121,8 +121,6 @@ class Conformer:
         if monomer_df_filepath.is_file() is False:
             monomer_df_filepath = default_monomer_df_filepath
 
-        new_df = get_monomer_info(str(monomer_df_filepath))
-
         try:
             if SequenceConstants.chain_separator in biln:
                 m_seq = biln.split(SequenceConstants.chain_separator)[0]
@@ -132,6 +130,9 @@ class Conformer:
             warnings.warn(f"No main peptide was detected for peptide \
                           with BILN: {biln}")
             sys.exit(1)
+
+        unique_residues = set(m_seq.replace(".", "-").split("-"))
+        new_df = get_monomer_info(str(monomer_df_filepath), include_res=unique_residues)
 
         # Loop through the list of monomers of the main peptide
         total_monomers = []
