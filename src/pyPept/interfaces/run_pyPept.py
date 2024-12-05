@@ -154,8 +154,8 @@ def main():
     # Handle as a pyPept.Sequence object
     ########################################
     seq = Sequence(biln)
-    # Correct PDB atom names
-    seq = correct_pdb_atoms(seq)
+    seq = correct_pdb_atoms(seq)  # Correct PDB atom names
+    
     # Loop with the included monomers
     mm_values = seq.s_monomers
     for i, monomer in enumerate(mm_values):
@@ -164,7 +164,7 @@ def main():
     # Generate the RDKit object
     logger.info("2. Creating the RDKit object")
     if args.depiction in ["local", "rdkit"]:
-        mol = Molecule(seq, args.depiction)
+        mol = Molecule(sequence=seq, depiction=args.depiction)
     else:
         logger and logger.error(
             "Please select a depiction mode from (local, rdkit)")
