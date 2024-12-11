@@ -36,7 +36,7 @@ class Molecule:
     """
 
     ############################################################################
-    def __init__(self, sequence=None, depiction='local'):
+    def __init__(self, sequence=None, depiction='local', is_2d_coords=True):
         """
         Initialize a Molecule object, optionally with a Sequence object.
         :param sequence:  input sequence to be converted to a molecule
@@ -46,7 +46,6 @@ class Molecule:
                           The other value is 'rdkit'
         :type depiction: str , choose from 'rdkit' and 'local'
         """
-
         self.mol = []
         self.offset = []
         self.bondlist = []
@@ -57,7 +56,7 @@ class Molecule:
         self.depiction = depiction
 
         # Main function, will modify data members defined above.
-        self.__from_sequence(sequence)
+        self.__from_sequence(sequence, is_2d_coords=is_2d_coords)
 
         if not isinstance(self.mol, Chem.rdchem.Mol):
             raise RuntimeError('pyPept.Molecule initialization failure: ' +
@@ -212,7 +211,7 @@ class Molecule:
     # end of Molecule.__fixDihedrals()
 
     ########################################################################################
-    def __from_sequence(self, sequence):
+    def __from_sequence(self, sequence, is_2d_coords=True):
         """
         Function to convert a pyPept.Sequence object into a rdkit mol object.
 
@@ -246,15 +245,16 @@ class Molecule:
         # Step 4: sanitize and generate 2D coords
         Chem.SanitizeMol(self.mol)
 
-        # Compute 2D coordinates
-        if self.depiction == 'rdkit':
-            rdDepictor.SetPreferCoordGen(True)
-            rdDepictor.Compute2DCoords(self.mol, clearConfs=True)
+        if is_2d_coords:
+            # Compute 2D coordinates
+            if self.depiction == 'rdkit':
+                rdDepictor.SetPreferCoordGen(True)
+                rdDepictor.Compute2DCoords(self.mol, clearConfs=True)
 
-        if self.depiction=='local':
-            AllChem.Compute2DCoords(self.mol, clearConfs=True)
-            Chem.AssignAtomChiralTagsFromStructure(self.mol)
-            self.__fixDihedrals()
+            if self.depiction=='local':
+                AllChem.Compute2DCoords(self.mol, clearConfs=True)
+                Chem.AssignAtomChiralTagsFromStructure(self.mol)
+                self.__fixDihedrals()
 
         return self.mol
 
