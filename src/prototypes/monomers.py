@@ -13,9 +13,6 @@ default_monomer_df_filepath = files(SequenceConstants.def_path).joinpath(Sequenc
 monomer_df_filepath = files(path).joinpath(monomer_lib)
 
 
-
-
-
 sdf_file = monomer_df_filepath
 
 

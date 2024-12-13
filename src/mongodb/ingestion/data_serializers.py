@@ -1,8 +1,12 @@
 from datetime import datetime, timezone
+from typing import List
 
 import pandas as pd
 from rdkit import Chem
 from rdkit.Chem import Descriptors
+
+from mongodb.utils.db_connection import get_db
+
 
 
 def compute_molecule_properties(row):
@@ -50,5 +54,4 @@ def serialize_to_mongodb_collections(df: pd.DataFrame):
         "monomers": monomers,
         "properties": properties
     }
-
 
