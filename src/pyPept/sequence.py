@@ -35,6 +35,7 @@ import numpy as np
 from rdkit import Chem
 from rdkit.Chem import PandasTools
 
+from utils.data_pypept import load_monomers_collection
 
 ##########################################################################
 # Functions and classes
@@ -104,6 +105,7 @@ class Sequence:
 
         unique_residues = set(self.s_biln.replace(".", "-").split("-"))
         self.monomer_df = get_monomer_info(str(monomer_df_filepath), include_res=unique_residues)
+        # self.monomer_df = load_monomers_collection(collection_name='global_monomers', symbols=unique_residues)
 
         try:
             # Parse the BILN sequence
@@ -452,6 +454,9 @@ class Sequence:
         :type romol: RDKit molecule
         :return:
         """
+        print("rgroups", rgroups)
+        print("rgroup_idx", rgroup_idx)
+
         emol = Chem.RWMol(romol)
         idx = []
 
