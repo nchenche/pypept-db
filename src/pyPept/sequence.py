@@ -34,7 +34,6 @@ from importlib.resources import files
 import numpy as np
 from rdkit import Chem
 from rdkit.Chem import PandasTools
-
 from utils.data_pypept import load_monomers_collection
 
 ##########################################################################

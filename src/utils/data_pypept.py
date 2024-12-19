@@ -7,7 +7,7 @@ from rdkit import Chem
 
 from mongodb.utils.db_connection import get_db
 
-
+Chem.ForwardSDMolSupplier
 
 def process_smiles(smiles, sanitize=True, removeHs=True):
     if not smiles:
@@ -79,3 +79,4 @@ if __name__ == "__main__":
     # db, collection, documents, df = serialize_monomers_to_pandas_df(collection_name=collection_name, symbol_list=symbol_list)
     df = load_monomers_collection(collection_name=collection_name, symbols=symbols)
 
+    Chem.MolToSmiles(df.m_romol['A'])
