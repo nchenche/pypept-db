@@ -12,29 +12,25 @@ from utils.chem import get_canonic_smiles, get_descriptors, generate_rgroup_mole
 def add_symbol(df: pd.DataFrame):
     df['symbol'] = df['m_abbr']
     df['_id'] = df['m_abbr']
-
     return df
 
 
 def add_smiles(df: pd.DataFrame):
     # Create the 'smiles' column
-    df['smiles'] = df['m_romol'].apply(Chem.MolToSmiles)
-    df['canonic_smiles'] = df['m_abbr'].apply(get_canonic_smiles)
-
+    df['smiles'] = df['m_romol'].apply(Chem.MolToSmiles)  # e.g. [1*]N[C@@H](C)C([2*])=O
+    df['canonic_smiles'] = df['m_abbr'].apply(get_canonic_smiles)  # e.g. C[C@H](N)C(=O)O
     return df
 
 
 def add_images(df: pd.DataFrame):
     # Generate png binary images
     df['image_binary'] = df['m_romol'].apply(generate_rgroup_molecule)
-
     return df
 
 
 def compute_properties(df: pd.DataFrame):
     # Get rdkit computed descriptors
     descriptors = df['m_romol'].apply(get_descriptors)
-
     return descriptors
 
 

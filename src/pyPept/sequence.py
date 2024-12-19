@@ -453,9 +453,6 @@ class Sequence:
         :type romol: RDKit molecule
         :return:
         """
-        print("rgroups", rgroups)
-        print("rgroup_idx", rgroup_idx)
-
         emol = Chem.RWMol(romol)
         idx = []
 
@@ -535,7 +532,6 @@ def get_monomer_info(path, include_res: Iterable=[]):
     if include_res:
         df_group = df_group[df_group['symbol'].isin(include_res)]
 
-    # print(df_group)
 
     # Define the groups to process
     groups = ['m_Rgroups', 'm_RgroupIdx', 'm_attachmentPointIdx']

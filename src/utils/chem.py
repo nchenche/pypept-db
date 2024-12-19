@@ -222,7 +222,6 @@ def get_canonic_smiles(abbr: str) -> str:
         >>> # The atoms at indices 0, 5, and 8 are now labeled as R₁, R₂, and R₃
 
     """
-    print(f"Canonic smiles for {abbr}...")
     # Start the Sequence object
     seq = Sequence(abbr)
 
