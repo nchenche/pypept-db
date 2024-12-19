@@ -4,7 +4,7 @@ from mongodb.ingestion.data_cleaners import clean_dataframe
 from mongodb.ingestion.data_serializers import serialize_to_mongodb_collections
 from mongodb.utils.db_connection import get_db
 
-from utils.data_pypept import load_sdf_file
+from utils.data_pypept import load_sdf_data
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -22,7 +22,7 @@ def ingest_data_to_mongodb():
 
     try:
         # 1. Load source file
-        df = load_sdf_file()
+        df = load_sdf_data()
         logging.info('Step 1 completed: SDF monomers data successfully loaded into dataframe.')
         
         # 2. Clean and transform data

@@ -1,13 +1,16 @@
 
 from importlib.resources import files
 from pathlib import Path
-from typing import Iterable, List
-import pandas as pd
-from rdkit import Chem
+from typing import Iterable, List, Optional
 
 from mongodb.utils.db_connection import get_db
+import pandas as pd
+from rdkit import Chem
+from utils.constants import SequenceConstants
 
-Chem.ForwardSDMolSupplier
+from log import get_logger
+logger = get_logger(__name__)
+
 
 def process_smiles(smiles, sanitize=True, removeHs=True):
     if not smiles:
@@ -26,57 +29,116 @@ def process_smiles(smiles, sanitize=True, removeHs=True):
     return mol
 
 
-def load_sdf_file() -> pd.DataFrame:
-    from pyPept.sequence import get_monomer_info, SequenceConstants
+def load_sdf_data(from_db=True, residues: Iterable=[]) -> pd.DataFrame:
+    if not from_db:
+        logger.info("Loading SDF data to dataframe from sdf file...")
 
-    # Read the monomer dataframe
-    default_monomer_df_filepath = files(SequenceConstants.def_path).joinpath(SequenceConstants.def_lib_filename)
-    df = get_monomer_info(str(default_monomer_df_filepath))
+        # Read the monomer dataframe
+        default_monomer_df_filepath = files(SequenceConstants.def_path).joinpath(SequenceConstants.def_lib_filename)
+        df = get_monomers_df(str(default_monomer_df_filepath))
+    else:
+        logger.info("Loading SDF data to dataframe from database...")
+        from io import BytesIO
+
+        combined_sdf = get_combined_sdf(set(residues))
+        sdf_io = BytesIO(combined_sdf.encode('utf-8'))
+        df = get_monomers_df(sdf_io)
 
     return df
 
 
-def load_monomers_collection(collection_name: str, symbols: Iterable=None):
+def get_combined_sdf(symbols: Optional[Iterable] = None) -> str:
     """
-    Retrieve the global_monomers collection and convert it back to a Pandas DataFrame, 
-    matching the original DataFrame structure, including `m_romol` as a Chem.Mol object.
+    Fetch and combine the SDF data for the given symbols from the MongoDB collection.
+    
+    This function queries the 'global_sdf' collection and retrieves the SDF content 
+    for the specified symbols. If no symbols are provided, it retrieves all the SDFs 
+    in the collection. The SDF blocks are concatenated into a single string.
     
     Args:
-        collection_name (str): Name of the global_monomers collection.
-        symbols (iterable, optional): List of monomer symbols to filter by.
-        
+        symbols (Optional[Iterable], optional): 
+            A list or iterable of symbols to filter the SDF data (e.g., ['A', 'C']).
+            If `None`, all SDFs in the collection are retrieved.
+    
     Returns:
-        pd.DataFrame: DataFrame matching the original structure.
+        str: A concatenated string of all SDFs matching the query. 
+             Each SDF block includes the `$$$$` delimiter.
+
+    Raises:
+        StopIteration: If no documents are found, an empty string is returned.
+        pymongo.errors.PyMongoError: If a query error occurs during execution.
+
+    Example:
+        >>> combined_sdf = get_combined_sdf(['A', 'C'])
+        >>> print(combined_sdf)
+        
+        >>> combined_sdf = get_combined_sdf()  # Get all SDFs in the collection
+        >>> print(combined_sdf)
     """
     # Connect to MongoDB
     db = get_db()
-    collection = db[collection_name]
-
-    # Build the query to filter by symbol list if provided
-    query = {}
+    collection = db['global_sdf']
+    
+    # Define the pipeline
+    pipeline = []
+    
+    # Add a $match stage if symbols are provided
     if symbols:
-        query = {"_id": {"$in": list(symbols)}}
+        pipeline.append({"$match": {"_id": {"$in": list(symbols)}}})
+    
+    # Group and concatenate the SDFs
+    pipeline.append({
+        "$group": {
+            "_id": None,
+            "combined_sdf": {"$push": "$sdf"}
+        }
+    })
 
-    # Retrieve documents from the collection
-    documents = list(collection.find(query, {'_id': 0, 'image_binary': 0, 'created_at': 0}))
+    try:
+        result = collection.aggregate(pipeline)
+        # If no documents are found, ensure result does not raise StopIteration
+        combined_sdf = ''.join(result.next().get('combined_sdf', []))
+    except StopIteration:
+        combined_sdf = ''  # No documents matched
+    except Exception as e:
+        print(f"Error occurred during SDF retrieval: {e}")
+        combined_sdf = ''
 
-    # Ensure the necessary fields are present in the DataFrame
-    df = pd.DataFrame(documents)
+    return combined_sdf
 
-    # Recreate the m_romol column from the canonic_smiles
-    if 'smiles' in df.columns:
-        # df['m_romol'] = df['smiles'].apply(lambda smiles: Chem.MolFromSmiles(smiles) if smiles else None)
-        df['m_romol'] = df['smiles'].apply(process_smiles)
-    # Set symbol as the index
-    df = df.set_index('symbol')
 
-    return df
+def get_monomers_df(path):
+    """
+    Convert a monomer SDF file to a Pandas dataframe object.
+
+    :param path: os path of the monomers.sdf file
+    :type path: os path
+
+    :return: monomer dictionary as a dataframe
+    """
+    # Load the SDF file
+    df_group = Chem.PandasTools.LoadSDF(path, molColName='m_romol')
+
+    # Define the groups to process
+    groups = ['m_Rgroups', 'm_RgroupIdx', 'm_attachmentPointIdx']
+
+    # Helper function to process each group column
+    def process_column(row, column):
+        values = row[column].split(SequenceConstants.csv_separator)
+        if column == 'm_Rgroups':
+            return [None if v == 'None' else v for v in values]
+        return [None if v == 'None' else int(v) for v in values]
+
+    # Apply the transformation
+    for group in groups:
+        df_group[group] = df_group.apply(lambda row: process_column(row, group), axis=1)
+
+    # Set the index and rename the column
+    df_group = df_group.set_index('symbol')
+
+    return df_group
+
 
 
 if __name__ == "__main__":
-    collection_name = "global_monomers"
-    symbols = ["A", "C"]
-    # db, collection, documents, df = serialize_monomers_to_pandas_df(collection_name=collection_name, symbol_list=symbol_list)
-    df = load_monomers_collection(collection_name=collection_name, symbols=symbols)
-
-    Chem.MolToSmiles(df.m_romol['A'])
+    df = load_sdf_data()

@@ -22,8 +22,6 @@ __license__ = "MIT"
 import sys
 import copy
 import re
-import os
-from typing import Iterable
 import warnings
 
 import string
@@ -34,27 +32,15 @@ from importlib.resources import files
 import numpy as np
 from rdkit import Chem
 from rdkit.Chem import PandasTools
-from utils.data_pypept import load_monomers_collection
+
+from utils.constants import SequenceConstants
+from utils.data_pypept import load_sdf_data
+
 
 ##########################################################################
 # Functions and classes
 ##########################################################################
 
-class SequenceConstants:
-    """
-    A class to hold defaults values related to pyPept.Sequence objects.
-    """
-    def_path = "pyPept.data"
-    def_lib_filename = "monomers.sdf"
-    monomer_join = "-"
-    chain_separator = "."
-    csv_separator = ","
-    helm_polymer = '|'
-    max_rgroups = 4
-
-
-# End of Sequence class-related constants definition.
-############################################################
 
 class Sequence:
     """
@@ -96,15 +82,14 @@ class Sequence:
                              SequenceConstants.chain_separator, seq)
 
         # Read the monomer dictionary
-        default_monomer_df_filepath = files(SequenceConstants.def_path).joinpath(SequenceConstants.def_lib_filename)
-        monomer_df_filepath = files(path).joinpath(monomer_lib)
+        # default_monomer_df_filepath = files(SequenceConstants.def_path).joinpath(SequenceConstants.def_lib_filename)
+        # monomer_df_filepath = files(path).joinpath(monomer_lib)
 
-        if monomer_df_filepath.is_file() is False:
-            monomer_df_filepath = default_monomer_df_filepath
+        # if monomer_df_filepath.is_file() is False:
+        #     monomer_df_filepath = default_monomer_df_filepath
 
         unique_residues = set(self.s_biln.replace(".", "-").split("-"))
-        self.monomer_df = get_monomer_info(str(monomer_df_filepath), include_res=unique_residues)
-        # self.monomer_df = load_monomers_collection(collection_name='global_monomers', symbols=unique_residues)
+        self.monomer_df = load_sdf_data(residues=unique_residues)
 
         try:
             # Parse the BILN sequence
@@ -516,7 +501,7 @@ class Sequence:
 # Additional functions
 ##########################################################################
 
-def get_monomer_info(path, include_res: Iterable=[]):
+def get_monomer_info(path):
     """
     Convert a monomer SDF file to a Pandas dataframe object.
 
@@ -526,12 +511,7 @@ def get_monomer_info(path, include_res: Iterable=[]):
     :return: monomer dictionary as a dataframe
     """
     # Load the SDF file
-    df_group = PandasTools.LoadSDF(path)
-
-    # Filter rows where the index is in include_res
-    if include_res:
-        df_group = df_group[df_group['symbol'].isin(include_res)]
-
+    df_group = PandasTools.LoadSDF(path, molColName='m_romol')
 
     # Define the groups to process
     groups = ['m_Rgroups', 'm_RgroupIdx', 'm_attachmentPointIdx']
@@ -548,7 +528,7 @@ def get_monomer_info(path, include_res: Iterable=[]):
         df_group[group] = df_group.apply(lambda row: process_column(row, group), axis=1)
 
     # Set the index and rename the column
-    df_group = df_group.set_index('symbol').rename(columns={"ROMol": "m_romol"})
+    df_group = df_group.set_index('symbol')
 
     return df_group
 
@@ -747,14 +727,15 @@ def correct_pdb_atoms(seq: Sequence, path=SequenceConstants.def_path,
     names_cap = {'ac': ['CH3', 'C', 'O'], 'am': ['N']}
 
     # Read the monomer dataframe
-    default_monomer_df_filepath = files(SequenceConstants.def_path).joinpath(SequenceConstants.def_lib_filename)
-    monomer_df_filepath = files(path).joinpath(monomer_lib)
+    # default_monomer_df_filepath = files(SequenceConstants.def_path).joinpath(SequenceConstants.def_lib_filename)
+    # monomer_df_filepath = files(path).joinpath(monomer_lib)
 
-    if monomer_df_filepath.is_file() is False:
-        monomer_df_filepath = default_monomer_df_filepath
+    # if monomer_df_filepath.is_file() is False:
+    #     monomer_df_filepath = default_monomer_df_filepath
 
     unique_residues = set(seq.s_biln.replace(".", "-").split("-"))
-    new_df = get_monomer_info(str(monomer_df_filepath), include_res=unique_residues)
+    new_df = load_sdf_data(residues=unique_residues)
+    # new_df = get_monomer_info(str(monomer_df_filepath), include_res=unique_residues)
 
     # Get monomer codes
     monomers = get_monomer_codes(new_df)

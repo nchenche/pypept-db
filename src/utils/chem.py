@@ -9,7 +9,6 @@ from pyPept.sequence import Sequence
 from pyPept.molecule import Molecule
 
 
-
 def get_isotope_index(mol: Chem.Mol) -> List[int]:
     """
     Identify atom indices of placeholder atoms with specific isotopes in a molecule.

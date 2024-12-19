@@ -41,8 +41,10 @@ from Bio.PDB import PDBIO
 # pyPept modules
 from pyPept.sequence import Sequence
 from pyPept.molecule import Molecule
-from pyPept.sequence import SequenceConstants
+from utils.constants import SequenceConstants
 from pyPept.sequence import get_monomer_info
+
+from utils.data_pypept import load_sdf_data
 
 ##########################################################################
 # Functions and classes
@@ -115,11 +117,11 @@ class Conformer:
                   'V': 'N[C@@]([H])(C(C)C)C(=O)O'}
 
         # Read the monomer dataframe
-        default_monomer_df_filepath = files(SequenceConstants.def_path).joinpath(SequenceConstants.def_lib_filename)
-        monomer_df_filepath = files(path).joinpath(monomer_lib)
+        # default_monomer_df_filepath = files(SequenceConstants.def_path).joinpath(SequenceConstants.def_lib_filename)
+        # monomer_df_filepath = files(path).joinpath(monomer_lib)
 
-        if monomer_df_filepath.is_file() is False:
-            monomer_df_filepath = default_monomer_df_filepath
+        # if monomer_df_filepath.is_file() is False:
+        #     monomer_df_filepath = default_monomer_df_filepath
 
         try:
             if SequenceConstants.chain_separator in biln:
@@ -132,7 +134,8 @@ class Conformer:
             sys.exit(1)
 
         unique_residues = set(m_seq.replace(".", "-").split("-"))
-        new_df = get_monomer_info(str(monomer_df_filepath), include_res=unique_residues)
+        new_df = load_sdf_data(residues=unique_residues)
+        # new_df = get_monomer_info(str(monomer_df_filepath), include_res=unique_residues)
 
         # Loop through the list of monomers of the main peptide
         total_monomers = []

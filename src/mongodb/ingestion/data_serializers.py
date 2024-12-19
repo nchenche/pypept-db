@@ -56,12 +56,12 @@ def collect_sdf_from_file(path: str | Path = None):
       - **sdf**: The entire SDF block for the monomer, including the `$$$$` delimiter.
       - **created_at**: A UTC timestamp indicating when the document was created.
 
-    If no path is provided, it defaults to the file path defined in **pyPept.SequenceConstants**.
+    If no path is provided, it defaults to the file path defined in **utils.constants.SequenceConstants**.
 
     Args:
         path (str | Path, optional): 
             The path to the SDF file to parse. If no path is provided, the default 
-            path from **pyPept.SequenceConstants** is used.
+            path from **utils.constants.SequenceConstants** is used.
     
     Returns:
         list[dict]:
@@ -96,7 +96,7 @@ def collect_sdf_from_file(path: str | Path = None):
     if path:
         sdf_file_path = path
     else:
-        from pyPept.sequence import SequenceConstants
+        from utils.constants import SequenceConstants
         default_monomer_df_filepath = files(SequenceConstants.def_path).joinpath(SequenceConstants.def_lib_filename)
         sdf_file_path = default_monomer_df_filepath
 
@@ -119,7 +119,7 @@ def collect_sdf_from_file(path: str | Path = None):
                     document = {
                             '_id': symbol,
                             'symbol': symbol,
-                            'sdf': monomer_sdf + '$$$$',  # Add back the $$$$ delimiter
+                            'sdf': monomer_sdf + '$$$$\n',  # Add back the $$$$ delimiter
                             'created_at': datetime.now(timezone.utc)
                     }
                     monomers_sdf.append(document)

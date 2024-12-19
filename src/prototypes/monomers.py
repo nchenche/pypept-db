@@ -1,6 +1,6 @@
 from importlib.resources import files
 
-from pyPept.sequence import SequenceConstants
+from utils.constants import SequenceConstants
 from rdkit.Chem import PandasTools
 
 
