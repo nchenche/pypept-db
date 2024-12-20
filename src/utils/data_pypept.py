@@ -101,7 +101,7 @@ def get_combined_sdf(symbols: Optional[Iterable] = None) -> str:
     except StopIteration:
         combined_sdf = ''  # No documents matched
     except Exception as e:
-        print(f"Error occurred during SDF retrieval: {e}")
+        logger.error(f"Error occurred during SDF retrieval: {e}")
         combined_sdf = ''
 
     return combined_sdf
