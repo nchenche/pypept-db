@@ -212,14 +212,6 @@ def get_canonic_smiles(abbr: str) -> str:
     Returns:
         str: SMILES of the monomer abbr
 
-    Examples:
-        >>> from rdkit import Chem
-        >>> smiles = "[1*]N[C@@H](CS[3*])C([2*])=O"
-        >>> mol = Chem.MolFromSmiles(smiles)
-        >>> indices = [0, 5, 8]  # Atom indices for [1*], [2*], and [3*]
-        >>> labeled_mol = set_rgroup_labels(mol, indices)
-        >>> # The atoms at indices 0, 5, and 8 are now labeled as R₁, R₂, and R₃
-
     """
     # Start the Sequence object
     seq = Sequence(abbr)

@@ -6,6 +6,7 @@ from typing import List
 import pandas as pd
 from rdkit import Chem
 from rdkit.Chem import Descriptors
+import swifter
 
 from mongodb.utils.db_connection import get_db
 
@@ -141,7 +142,7 @@ def serialize_to_mongodb_collections(df: pd.DataFrame):
         dict: Two collections: 'monomers' and 'properties'.
     """
     monomers = df.to_dict(orient="records")
-    properties = df.apply(compute_molecule_properties, axis=1).to_list()
+    properties = df.swifter.apply(compute_molecule_properties, axis=1).to_list()
     sdf = collect_sdf_from_file()
     
     return {

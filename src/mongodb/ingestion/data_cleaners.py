@@ -29,12 +29,6 @@ def add_images(df: pd.DataFrame):
     return df
 
 
-def compute_properties(df: pd.DataFrame):
-    # Get rdkit computed descriptors
-    descriptors = df['m_romol'].swifter.apply(get_descriptors)
-    return descriptors
-
-
 def drop_columns(df: pd.DataFrame, cols: List|Iterable):
     for colname in cols:
         df.drop(colname, axis=1, inplace=True)

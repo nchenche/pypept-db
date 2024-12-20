@@ -6,3 +6,4 @@ requests >= 2.27.1
 igraph >= 0.9.10
 biopython >= 1.79
 pymongo == 4.10.1
+swifter == 1.4.0
