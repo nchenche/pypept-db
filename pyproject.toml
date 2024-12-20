@@ -59,5 +59,6 @@ push            = true
 [project.scripts]
 run_pyPept = "pyPept.interfaces.run_pyPept:main"
 run_ingestion = "mongodb.scripts.run_ingestion:main"
+run_db2sdf = "mongodb.scripts.run_db2sdf:main"
 
 

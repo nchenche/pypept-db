@@ -33,8 +33,9 @@ def load_sdf_data(from_db=False, from_file: str|Path=None, residues: Iterable=[]
     try:
         if from_db:
             logger.debug("Loading SDF data to dataframe from database...")
-            from io import BytesIO
             combined_sdf = get_combined_sdf(set(residues))
+            
+            from io import BytesIO
             sdf_io = BytesIO(combined_sdf.encode('utf-8'))
             df = get_monomers_df(sdf_io)
         elif from_file:
