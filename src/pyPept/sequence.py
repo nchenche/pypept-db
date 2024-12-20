@@ -89,7 +89,7 @@ class Sequence:
         #     monomer_df_filepath = default_monomer_df_filepath
 
         unique_residues = set(self.s_biln.replace(".", "-").split("-"))
-        self.monomer_df = load_sdf_data(residues=unique_residues)
+        self.monomer_df = load_sdf_data(from_db=True, residues=unique_residues)
 
         try:
             # Parse the BILN sequence

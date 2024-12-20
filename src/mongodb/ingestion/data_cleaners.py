@@ -5,6 +5,7 @@ from typing import Iterable, List
 
 import pandas as pd
 from rdkit import Chem
+import swifter
 
 from utils.chem import get_canonic_smiles, get_descriptors, generate_rgroup_molecule
 
@@ -18,19 +19,19 @@ def add_symbol(df: pd.DataFrame):
 def add_smiles(df: pd.DataFrame):
     # Create the 'smiles' column
     df['smiles'] = df['m_romol'].apply(Chem.MolToSmiles)  # e.g. [1*]N[C@@H](C)C([2*])=O
-    df['canonic_smiles'] = df['m_abbr'].apply(get_canonic_smiles)  # e.g. C[C@H](N)C(=O)O
+    df['canonic_smiles'] = df['m_abbr'].swifter.apply(get_canonic_smiles)  # e.g. C[C@H](N)C(=O)O
     return df
 
 
 def add_images(df: pd.DataFrame):
     # Generate png binary images
-    df['image_binary'] = df['m_romol'].apply(generate_rgroup_molecule)
+    df['image_binary'] = df['m_romol'].swifter.apply(generate_rgroup_molecule)
     return df
 
 
 def compute_properties(df: pd.DataFrame):
     # Get rdkit computed descriptors
-    descriptors = df['m_romol'].apply(get_descriptors)
+    descriptors = df['m_romol'].swifter.apply(get_descriptors)
     return descriptors
 
 
@@ -45,7 +46,7 @@ def clean_dataframe(df: pd.DataFrame):
     df = add_images(df=df)
     df = add_symbol(df=df)
     df = drop_columns(df=df, cols=["m_romol"])
-    df['created_at'] = df.apply(lambda row: datetime.now(timezone.utc), axis=1)
+    df['created_at'] = df.swifter.apply(lambda row: datetime.now(timezone.utc), axis=1)
 
     return df
 

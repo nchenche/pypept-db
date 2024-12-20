@@ -225,7 +225,7 @@ def get_canonic_smiles(abbr: str) -> str:
     seq = Sequence(abbr)
 
     # Generate the complete SMILES
-    mol = Molecule(seq, is_2d_coords=True)
+    mol = Molecule(seq)
     smiles = mol.get_molecule(fmt='Smiles')
 
     return smiles

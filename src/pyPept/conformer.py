@@ -134,7 +134,7 @@ class Conformer:
             sys.exit(1)
 
         unique_residues = set(m_seq.replace(".", "-").split("-"))
-        new_df = load_sdf_data(residues=unique_residues)
+        new_df = load_sdf_data(from_db=True, residues=unique_residues)
         # new_df = get_monomer_info(str(monomer_df_filepath), include_res=unique_residues)
 
         # Loop through the list of monomers of the main peptide

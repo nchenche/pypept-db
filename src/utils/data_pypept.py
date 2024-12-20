@@ -29,22 +29,28 @@ def process_smiles(smiles, sanitize=True, removeHs=True):
     return mol
 
 
-def load_sdf_data(from_db=True, residues: Iterable=[]) -> pd.DataFrame:
-    if not from_db:
-        logger.info("Loading SDF data to dataframe from sdf file...")
+def load_sdf_data(from_db=False, from_file: str|Path=None, residues: Iterable=[]) -> pd.DataFrame:
+    try:
+        if from_db:
+            logger.debug("Loading SDF data to dataframe from database...")
+            from io import BytesIO
+            combined_sdf = get_combined_sdf(set(residues))
+            sdf_io = BytesIO(combined_sdf.encode('utf-8'))
+            df = get_monomers_df(sdf_io)
+        elif from_file:
+            logger.debug(f"Loading SDF from file {from_file}...")
+            df = get_monomers_df(from_file)
+        else:
+            logger.debug("Loading SDF data default file...")
+            default_monomer_df_filepath = files(SequenceConstants.def_path).joinpath(SequenceConstants.def_lib_filename)
+            df = get_monomers_df(str(default_monomer_df_filepath))
 
-        # Read the monomer dataframe
-        default_monomer_df_filepath = files(SequenceConstants.def_path).joinpath(SequenceConstants.def_lib_filename)
-        df = get_monomers_df(str(default_monomer_df_filepath))
-    else:
-        logger.info("Loading SDF data to dataframe from database...")
-        from io import BytesIO
+        logger.debug("SDF data successfully loaded.")
+        return df
 
-        combined_sdf = get_combined_sdf(set(residues))
-        sdf_io = BytesIO(combined_sdf.encode('utf-8'))
-        df = get_monomers_df(sdf_io)
-
-    return df
+    except Exception as e:
+        logger.error(f"Error loading SDF data: {e}")
+        raise
 
 
 def get_combined_sdf(symbols: Optional[Iterable] = None) -> str:
@@ -141,4 +147,4 @@ def get_monomers_df(path):
 
 
 if __name__ == "__main__":
-    df = load_sdf_data()
+    df = load_sdf_data(from_db=True)

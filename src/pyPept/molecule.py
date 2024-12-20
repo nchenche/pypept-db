@@ -36,7 +36,7 @@ class Molecule:
     """
 
     ############################################################################
-    def __init__(self, sequence=None, depiction='local', is_2d_coords=True):
+    def __init__(self, sequence=None, depiction='local'):
         """
         Initialize a Molecule object, optionally with a Sequence object.
         :param sequence:  input sequence to be converted to a molecule
@@ -56,7 +56,7 @@ class Molecule:
         self.depiction = depiction
 
         # Main function, will modify data members defined above.
-        self.__from_sequence(sequence, is_2d_coords=is_2d_coords)
+        self.__from_sequence(sequence)
 
         if not isinstance(self.mol, Chem.rdchem.Mol):
             raise RuntimeError('pyPept.Molecule initialization failure: ' +
@@ -211,7 +211,7 @@ class Molecule:
     # end of Molecule.__fixDihedrals()
 
     ########################################################################################
-    def __from_sequence(self, sequence, is_2d_coords=True):
+    def __from_sequence(self, sequence):
         """
         Function to convert a pyPept.Sequence object into a rdkit mol object.
 
@@ -245,16 +245,15 @@ class Molecule:
         # Step 4: sanitize and generate 2D coords
         Chem.SanitizeMol(self.mol)
 
-        if is_2d_coords:
-            # Compute 2D coordinates
-            if self.depiction == 'rdkit':
-                rdDepictor.SetPreferCoordGen(True)
-                rdDepictor.Compute2DCoords(self.mol, clearConfs=True)
+        # Compute 2D coordinates
+        if self.depiction == 'rdkit':
+            rdDepictor.SetPreferCoordGen(True)
+            rdDepictor.Compute2DCoords(self.mol, clearConfs=True)
 
-            if self.depiction=='local':
-                AllChem.Compute2DCoords(self.mol, clearConfs=True)
-                Chem.AssignAtomChiralTagsFromStructure(self.mol)
-                self.__fixDihedrals()
+        if self.depiction=='local':
+            AllChem.Compute2DCoords(self.mol, clearConfs=True)
+            Chem.AssignAtomChiralTagsFromStructure(self.mol)
+            self.__fixDihedrals()
 
         return self.mol
 
