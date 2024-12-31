@@ -143,11 +143,9 @@ def serialize_to_mongodb_collections(df: pd.DataFrame):
     """
     monomers = df.to_dict(orient="records")
     properties = df.swifter.apply(compute_molecule_properties, axis=1).to_list()
-    sdf = collect_sdf_from_file()
     
     return {
         "monomers": monomers,
         "properties": properties,
-        "sdf": sdf
     }
 

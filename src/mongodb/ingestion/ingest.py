@@ -1,6 +1,6 @@
 from pathlib import Path
 from mongodb.ingestion.data_cleaners import clean_dataframe
-from mongodb.ingestion.data_serializers import serialize_to_mongodb_collections
+from mongodb.ingestion.data_serializers import serialize_to_mongodb_collections, collect_sdf_from_file
 from mongodb.utils.db_connection import get_db
 
 from utils.data_pypept import load_sdf_data
@@ -19,37 +19,70 @@ def ingest_data_to_mongodb(source: str|Path):
 
     try:
         # 1. Load source file
+        logger.info('Step 1: Loading SDF monomers data into dataframe...')
         df = load_sdf_data(from_file=source)
-        logger.info('Step 1 completed: SDF monomers data successfully loaded into dataframe.')
         
-        # 2. Clean and transform data
-        df_clean = clean_dataframe(df)
-        logger.info('Step 2 completed: Dataframe cleaned and transformed.')
-
+        # 2. Collect/Parse SDF data
+        logger.info('Step 2: Parsing SDF monomers data...')
+        sdf = collect_sdf_from_file(path=source)
         
-        # 3. Serialize for MongoDB
-        mongodb_collections = serialize_to_mongodb_collections(df_clean)
-        logger.info('Step 3 completed: Data collections ready to be ingested.')
-        
-        # 4. Access and insert data to the db
+        # 3. Insert SDF data collection to db
         db = get_db()
-        logger.info(f'Step 4.1 completed: Successful access to the database {db.name}.')
+        logger.info(f'Step 3: Ingestion of SDF monomers data to {db.name} as "global_sdf" collection...')
+        db["global_sdf"].drop()
+        db["global_sdf"].insert_many(sdf)
 
-        monomers_collection = db["global_monomers"]
-        properties_collection = db["global_properties"]
-        sdf_collections = db["global_sdf"]
-
-        monomers_collection.drop()
-        monomers_collection.insert_many(mongodb_collections["monomers"])
-        logger.info(f'Step 4.2 completed: monomers data successfully added as "global_monomers" collection.')
-
-        properties_collection.drop()
-        properties_collection.insert_many(mongodb_collections["properties"])
-        logger.info(f'Step 4.3 completed: properties data successfully added as "global_properties" collection.')
+        # 4. Load SDF from db
+        logger.info(f'Step 4: Loading SDF data collection from {db.name}...')
+        df = load_sdf_data(from_db=True)
         
-        sdf_collections.drop()
-        sdf_collections.insert_many(mongodb_collections["sdf"])
-        logger.info(f'Step 4.4 completed: sdf data successfully added as "global_sdf" collection.')
+        # 5. Transform df (add SMILES, images)
+        logger.info('Step 5: Transform dataframe...')
+        df_transformed = clean_dataframe(df)
+
+        # 6. Collect global monomers and compute their properties
+        logger.info('Step 6: Compute monomers properties...')
+        mongodb_collections = serialize_to_mongodb_collections(df=df_transformed)
+
+        # 7. Insert global monomers collection to db
+        logger.info(f'Step 7: Ingestion of global monomers collection to {db.name}...')
+        db["global_monomers"].drop()
+        db["global_monomers"].insert_many(mongodb_collections["monomers"])
+
+        # 8. Insert monomers properties collection to db
+        logger.info(f'Step 7: Ingestion of monomers properties collection to {db.name}...')
+        db["global_properties"].drop()
+        db["global_properties"].insert_many(mongodb_collections["properties"])
+
+
+        # 2. Clean and transform data
+        # df_clean = clean_dataframe(df)
+        # logger.info('Step 2 completed: Dataframe cleaned and transformed.')
+
+        
+        # # 3. Serialize for MongoDB
+        # mongodb_collections = serialize_to_mongodb_collections(df_clean)
+        # logger.info('Step 3 completed: Data collections ready to be ingested.')
+        
+        # # 4. Access and insert data to the db
+        # db = get_db()
+        # logger.info(f'Step 4.1 completed: Successful access to the database {db.name}.')
+
+        # monomers_collection = db["global_monomers"]
+        # properties_collection = db["global_properties"]
+        # sdf_collections = db["global_sdf"]
+
+        # monomers_collection.drop()
+        # monomers_collection.insert_many(mongodb_collections["monomers"])
+        # logger.info(f'Step 4.2 completed: monomers data successfully added as "global_monomers" collection.')
+
+        # properties_collection.drop()
+        # properties_collection.insert_many(mongodb_collections["properties"])
+        # logger.info(f'Step 4.3 completed: properties data successfully added as "global_properties" collection.')
+        
+        # sdf_collections.drop()
+        # sdf_collections.insert_many(mongodb_collections["sdf"])
+        # logger.info(f'Step 4.4 completed: sdf data successfully added as "global_sdf" collection.')
 
         logger.info('Ingestion completed.')
     except Exception as e:
