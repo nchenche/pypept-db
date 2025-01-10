@@ -3,7 +3,7 @@ from importlib.resources import files
 from pathlib import Path
 from typing import Iterable, List, Optional
 
-from mongodb.utils.db_connection import get_db
+from pypeptdb.utils.db_connection import get_db
 import pandas as pd
 from rdkit import Chem
 from utils.constants import SequenceConstants
@@ -56,7 +56,7 @@ def load_sdf_data(from_db=False, from_file: str|Path=None, residues: Iterable=[]
 
 def get_combined_sdf(symbols: Optional[Iterable] = None) -> str:
     """
-    Fetch and combine the SDF data for the given symbols from the MongoDB collection.
+    Fetch and combine the SDF data for the given symbols from the pypeptdb collection.
     
     This function queries the 'global_sdf' collection and retrieves the SDF content 
     for the specified symbols. If no symbols are provided, it retrieves all the SDFs 
@@ -82,7 +82,7 @@ def get_combined_sdf(symbols: Optional[Iterable] = None) -> str:
         >>> combined_sdf = get_combined_sdf()  # Get all SDFs in the collection
         >>> print(combined_sdf)
     """
-    # Connect to MongoDB
+    # Connect to pypeptdb
     db = get_db()
     collection = db['global_sdf']
     
