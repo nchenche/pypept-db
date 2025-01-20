@@ -1,5 +1,4 @@
 import argparse
-from pathlib import Path
 
 from pypeptdb.ingestion.ingest import ingest_data_to_pypeptdb
 

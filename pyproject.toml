@@ -58,3 +58,4 @@ push            = true
 
 [project.scripts]
 run_pyPept = "pyPept.interfaces.run_pyPept:main"
+run_ingestion = "pypeptdb.scripts.run_ingestion:main"

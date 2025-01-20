@@ -1,6 +1,6 @@
 from pathlib import Path
 from pypeptdb.ingestion.data_cleaners import clean_dataframe
-from pypeptdb.ingestion.data_serializers import serialize_to_pypeptdb_collections, collect_sdf_from_file
+from pypeptdb.ingestion.data_serializers import serialize_to_pypeptdb_collections, collect_sdf_from_file, create_mongodb_indexes
 from pypeptdb.utils.db_connection import get_db
 
 from utils.data_pypept import load_sdf_data
@@ -50,9 +50,14 @@ def ingest_data_to_pypeptdb(source: str|Path):
         db["global_monomers"].insert_many(pypeptdb_collections["monomers"])
 
         # 8. Insert monomers properties collection to db
-        logger.info(f'Step 7: Ingestion of monomers properties collection to {db.name}...')
+        logger.info(f'Step 8: Ingestion of monomers properties collection to {db.name}...')
         db["global_properties"].drop()
         db["global_properties"].insert_many(pypeptdb_collections["properties"])
+
+        # 9. Create useful indexes
+        logger.info(f'Step 9: Creation of mongodb indexes...')
+        create_mongodb_indexes(db=db)
+
 
         logger.info('Ingestion completed.')
     except Exception as e:

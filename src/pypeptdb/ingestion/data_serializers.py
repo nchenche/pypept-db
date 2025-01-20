@@ -4,12 +4,17 @@ from pathlib import Path
 from typing import List
 
 import pandas as pd
+from pymongo.database import Database
+from pymongo.errors import PyMongoError
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 import swifter
 
 from pypeptdb.utils.db_connection import get_db
 
+
+from log import get_logger
+logger = get_logger(__name__)
 
 
 def compute_molecule_properties(row):
@@ -149,3 +154,25 @@ def serialize_to_pypeptdb_collections(df: pd.DataFrame):
         "properties": properties,
     }
 
+
+def create_mongodb_indexes(db: Database):
+    """
+    Creates a single text index on multiple fields in the global_monomers collection.
+    """
+    try:
+        db.global_monomers.create_index(
+            [
+                ("m_name", "text"),
+                ("symbol", "text"),
+                ("m_type", "text"),
+                ("m_subtype", "text"),
+                ("natAnalog", "text"),
+                ("pdbName", "text"),
+            ],
+            name="monomers_text_index"
+        )
+        logger.info("Text index 'monomers_text_index' created successfully.")
+    except PyMongoError as e:
+        logger.error(f"Error creating text index: {e}")
+    except Exception as e:
+        logger.error(f"Unexpected error creating text index: {e}")
