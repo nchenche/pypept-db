@@ -32,7 +32,7 @@ def ingest_data_to_pypeptdb(source: str|Path):
         db["global_sdf"].drop()
         db["global_sdf"].insert_many(sdf)
 
-        # 4. Load SDF from db
+        # 4. Load SDF from db ; required to compute monomers properties
         logger.info(f'Step 4: Loading SDF data collection from {db.name}...')
         df = load_sdf_data(from_db=True)
         
@@ -49,13 +49,18 @@ def ingest_data_to_pypeptdb(source: str|Path):
         db["global_monomers"].drop()
         db["global_monomers"].insert_many(pypeptdb_collections["monomers"])
 
-        # 8. Insert monomers properties collection to db
-        logger.info(f'Step 8: Ingestion of monomers properties collection to {db.name}...')
+        # 8. Insert monomers image collection to db
+        logger.info(f'Step 8: Ingestion of monomers image collection to {db.name}...')
+        db["monomer_images"].drop()
+        db["monomer_images"].insert_many(pypeptdb_collections["images"])
+
+        # 9. Insert monomers properties collection to db
+        logger.info(f'Step 9: Ingestion of monomers properties collection to {db.name}...')
         db["global_properties"].drop()
         db["global_properties"].insert_many(pypeptdb_collections["properties"])
 
-        # 9. Create useful indexes
-        logger.info(f'Step 9: Creation of mongodb indexes...')
+        # 10. Create useful indexes
+        logger.info(f'Step 10: Creation of mongodb indexes...')
         create_mongodb_indexes(db=db)
 
 

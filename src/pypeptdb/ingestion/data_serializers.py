@@ -47,6 +47,23 @@ def compute_molecule_properties(row):
     return descriptor_values
 
 
+def serialize_monomer_images(row):
+    """
+    Transform monomer image into a specific mongodb document
+    Args:
+        row (pd.Series): Row of the DataFrame.
+    Returns:
+        dict: A dictionary of molecular images in binary format, plus _id and symbol.
+    """
+    image = {
+                "_id": row['symbol'],  # row.name is the index (symbol)
+                "symbol": row['symbol'],
+                "created_at": datetime.now(timezone.utc),
+                "image_binary": row["image_binary"],
+            }
+    return image
+
+
 def collect_sdf_from_file(path: str | Path = None):
     """
     Parse an SDF file containing multiple monomer structures and extract the SDF content 
@@ -132,7 +149,7 @@ def collect_sdf_from_file(path: str | Path = None):
                     break
             
             if symbol is None:
-                print(f"Warning: No symbol found for one of the monomers. Skipping...")
+                logger.warning(f"Warning: No symbol found for one of the monomers. Skipping...")
                 continue
 
     return monomers_sdf
@@ -146,12 +163,15 @@ def serialize_to_pypeptdb_collections(df: pd.DataFrame):
     Returns:
         dict: Two collections: 'monomers' and 'properties'.
     """
+    monomer_images = df.swifter.apply(serialize_monomer_images, axis=1).to_list()
+    df.drop('image_binary', axis=1, inplace=True)
     monomers = df.to_dict(orient="records")
     properties = df.swifter.apply(compute_molecule_properties, axis=1).to_list()
     
     return {
         "monomers": monomers,
         "properties": properties,
+        "images": monomer_images
     }
 
 
