@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from importlib.resources import files
+import math
 from pathlib import Path
 from typing import List
 
@@ -40,7 +41,9 @@ def compute_molecule_properties(row):
 
     for desc_name, function in Descriptors._descList:
         try:
-            descriptor_values[desc_name] = function(mol)
+            value = function(mol)
+            # Replace NaN with None for JSON compatibility
+            descriptor_values[desc_name] = None if isinstance(value, float) and math.isnan(value) else value
         except Exception as e:
             descriptor_values[desc_name] = None  # Handle any errors in computation
 
