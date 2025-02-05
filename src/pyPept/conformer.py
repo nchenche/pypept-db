@@ -128,10 +128,8 @@ class Conformer:
                 m_seq = biln.split(SequenceConstants.chain_separator)[0]
             else:
                 m_seq = biln
-        except ValueError:
-            warnings.warn(f"No main peptide was detected for peptide \
-                          with BILN: {biln}")
-            sys.exit(1)
+        except ValueError as error:
+            raise ValueError(f"Error detecting main peptide in the BILN sequence: {error}")
 
         unique_residues = get_unique_residues(sequence=m_seq)
         new_df = load_sdf_data(from_db=True, residues=unique_residues)
