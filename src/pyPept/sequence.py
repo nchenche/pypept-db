@@ -143,10 +143,11 @@ class Sequence:
                 # Check if name exists in MonomerDic
 
                 if resname not in self.monomer_df.index:
-                    warnings.warn(
-                        f"Monomer {resname} in BILN not found in MonomerDic")
-                    warnings.warn(
-                        "Need to check BILN or update MonomerDic before proceeding.")
+                    raise ValueError("Monomer {} in BILN not found in MonomerDic".format(resname))
+                    # warnings.warn(
+                    #     f"Monomer {resname} in BILN not found in MonomerDic")
+                    # warnings.warn(
+                    #     "Need to check BILN or update MonomerDic before proceeding.")
                     sys.exit(3)
 
                 # Add additional information of the monomers
