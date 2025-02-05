@@ -34,7 +34,7 @@ from rdkit import Chem
 from rdkit.Chem import PandasTools
 
 from utils.constants import SequenceConstants
-from utils.data_pypept import load_sdf_data
+from utils.data_pypept import load_sdf_data, get_unique_residues
 
 
 ##########################################################################
@@ -88,7 +88,7 @@ class Sequence:
         # if monomer_df_filepath.is_file() is False:
         #     monomer_df_filepath = default_monomer_df_filepath
 
-        unique_residues = set(self.s_biln.replace(".", "-").split("-"))
+        unique_residues = get_unique_residues(sequence=self.s_biln)
         self.monomer_df = load_sdf_data(from_db=True, residues=unique_residues)
 
         try:
@@ -734,7 +734,7 @@ def correct_pdb_atoms(seq: Sequence, path=SequenceConstants.def_path,
     # if monomer_df_filepath.is_file() is False:
     #     monomer_df_filepath = default_monomer_df_filepath
 
-    unique_residues = set(seq.s_biln.replace(".", "-").split("-"))
+    unique_residues = get_unique_residues(sequence=seq.s_biln)
     new_df = load_sdf_data(residues=unique_residues)
     # new_df = get_monomer_info(str(monomer_df_filepath), include_res=unique_residues)
 

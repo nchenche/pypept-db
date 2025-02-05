@@ -1,6 +1,7 @@
 
 from importlib.resources import files
 from pathlib import Path
+import re
 from typing import Iterable, List, Optional
 
 from pypeptdb.utils.db_connection import get_db
@@ -145,6 +146,24 @@ def get_monomers_df(path):
 
     return df_group
 
+
+def get_unique_residues(sequence: str) -> set:
+    """ Get the unique residues from a sequence string.
+
+    Args:
+        sequence (str): A sequence string with residues separated by a delimiter.
+
+    Returns:
+        _type_: A set of unique residues in the sequence.
+    """
+
+    # Remove any brackets and their contents
+    clean_biln = re.sub(r'\([^)]*\)', '', sequence)
+
+    # Get the unique residues
+    unique_residues = set(clean_biln.replace(".", "-").split("-"))
+
+    return unique_residues
 
 
 if __name__ == "__main__":

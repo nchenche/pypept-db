@@ -44,7 +44,7 @@ from pyPept.molecule import Molecule
 from utils.constants import SequenceConstants
 from pyPept.sequence import get_monomer_info
 
-from utils.data_pypept import load_sdf_data
+from utils.data_pypept import load_sdf_data, get_unique_residues
 
 ##########################################################################
 # Functions and classes
@@ -133,7 +133,7 @@ class Conformer:
                           with BILN: {biln}")
             sys.exit(1)
 
-        unique_residues = set(m_seq.replace(".", "-").split("-"))
+        unique_residues = get_unique_residues(sequence=m_seq)
         new_df = load_sdf_data(from_db=True, residues=unique_residues)
         # new_df = get_monomer_info(str(monomer_df_filepath), include_res=unique_residues)
 
