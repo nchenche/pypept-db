@@ -93,7 +93,7 @@ class Molecule:
 
             # Set the residue name for each atom    
             for atom in monomer.GetAtoms():
-                atom.SetProp('resname', val['m_abbr'])
+                atom.SetProp('resname', f"{val['m_abbr']}-{i}")
 
             if i == 0:
                 mol = monomer
