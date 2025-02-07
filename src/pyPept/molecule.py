@@ -90,10 +90,12 @@ class Molecule:
         mol = [0]
         for i,val in enumerate(mons):
             monomer = val['m_romol']
+            residue_idx = f"{val['m_abbr']}-{i}"
+            val.update({'res-idx': residue_idx})
 
             # Set the residue name for each atom    
             for atom in monomer.GetAtoms():
-                atom.SetProp('resname', f"{val['m_abbr']}-{i}")
+                atom.SetProp('resname', residue_idx)
 
             if i == 0:
                 mol = monomer
