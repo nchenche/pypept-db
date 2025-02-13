@@ -123,7 +123,6 @@ class Molecule:
 
     ########################################################################################
     def __generate_new_offset(self):
-        # mapping = {}
         mapping_offset = {}
         for atom in self.mol.GetAtoms():
             resname = atom.GetProp('resname')  # e.g., "GLY-0"
