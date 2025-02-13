@@ -735,7 +735,7 @@ def correct_pdb_atoms(seq: Sequence, path=SequenceConstants.def_path,
     #     monomer_df_filepath = default_monomer_df_filepath
 
     unique_residues = get_unique_residues(sequence=seq.s_biln)
-    new_df = load_sdf_data(residues=unique_residues)
+    new_df = load_sdf_data(from_db=True, residues=unique_residues)
     # new_df = get_monomer_info(str(monomer_df_filepath), include_res=unique_residues)
 
     # Get monomer codes

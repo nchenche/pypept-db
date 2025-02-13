@@ -162,7 +162,6 @@ def get_unique_residues(sequence: str) -> set:
 
     # Get the unique residues
     unique_residues = set(clean_biln.replace(".", "-").split("-"))
-
     return unique_residues
 
 

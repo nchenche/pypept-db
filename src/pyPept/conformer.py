@@ -285,6 +285,7 @@ class Conformer:
                     bounds[ind_o, ind_n] = 3.2
 
         # Assignment of beta sheets
+        fragment = []
         segments = []
         flag = 0
         for i, ele in enumerate(ss_value):
