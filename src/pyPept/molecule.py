@@ -94,8 +94,9 @@ class Molecule:
             val.update({'res-idx': residue_idx})
 
             # Set the residue name for each atom    
-            for atom in monomer.GetAtoms():
+            for atom_idx, atom in enumerate(monomer.GetAtoms()):
                 atom.SetProp('resname', residue_idx)
+                atom.SetProp('orig_idx', str(atom_idx))
 
             if i == 0:
                 mol = monomer
@@ -119,6 +120,22 @@ class Molecule:
             at2 = offset[m2_value] + at2
 
             self.mol.AddBond(at1, at2, Chem.BondType.SINGLE)
+
+    ########################################################################################
+    def __generate_new_offset(self):
+        # mapping = {}
+        mapping_offset = {}
+        for atom in self.mol.GetAtoms():
+            resname = atom.GetProp('resname')  # e.g., "GLY-0"
+            if resname in mapping_offset:
+                continue
+
+            orig_idx = atom.GetProp('orig_idx')
+            new_idx = atom.GetIdx()
+            mapping_offset[resname] = new_idx - int(orig_idx)            
+            
+        for monomer in self.monomers:
+            monomer['offset'] = mapping_offset[monomer['res-idx']]
 
     ########################################################################################
     def __fixDihedrals(self):
@@ -251,6 +268,9 @@ class Molecule:
 
         # Step 4: sanitize and generate 2D coords
         Chem.SanitizeMol(self.mol)
+
+        # Step 5: generate a new offset for each bound monomer
+        self.__generate_new_offset()
 
         # Compute 2D coordinates
         if self.depiction == 'rdkit':
