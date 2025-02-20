@@ -137,6 +137,28 @@ class Molecule:
             monomer['offset'] = mapping_offset[monomer['res-idx']]
 
     ########################################################################################
+    def __generate_bonds_data(self):
+        """
+        Convert the bonds from their original indices to new indices using the atom_mapping.
+        """
+        self.bonds = []
+        for bond in self.bondlist:
+            m1_value, at1, m2_value, at2 = bond
+            monomer1 = self.monomers[m1_value]
+            monomer2 = self.monomers[m2_value]
+            at1_new_index = at1 + monomer1['offset']
+            at2_new_index = at2 + monomer2['offset']
+
+            rgroups_index = [monomer1['m_attachmentPointIdx'].index(at1), monomer2['m_attachmentPointIdx'].index(at2)]
+            bounds_data = {
+                'residues': [monomer1['res-idx'], monomer2['res-idx']],
+                'atoms': [at1_new_index, at2_new_index],
+                'rgroups_index': rgroups_index,
+                'bound_type': 'other' if rgroups_index[0] in [2, 3] or rgroups_index[1] in [2, 3] else 'peptide'
+            }
+            self.bonds.append(bounds_data)
+
+    ########################################################################################
     def __fixDihedrals(self):
         """
         Fast fix to get a reasonable 2D representation of the Molecule.
@@ -270,6 +292,9 @@ class Molecule:
 
         # Step 5: generate a new offset for each bound monomer
         self.__generate_new_offset()
+
+        # Step 6: generate bonds data
+        self.__generate_bonds_data()
 
         # Compute 2D coordinates
         if self.depiction == 'rdkit':
