@@ -3,14 +3,14 @@ from pathlib import Path
 from datetime import datetime, timezone
 import pytest
 
-from pypeptdb.utils.db_connection import get_db
-from pypeptdb.ingestion.data_serializers import (
+from pypeptdb.database.utils.db_connection import get_db
+from pypeptdb.database.ingestion.data_serializers import (
     collect_sdf_document,
     serialize_to_pypeptdb_collections
 )
-from utils.data_pypept import load_sdf_data, get_combined_sdf, get_monomers_df
+from pypeptdb.utils.data_pypept import load_sdf_data, get_combined_sdf, get_monomers_df
 
-from src.tests.db.lib import _clean_dataframe, _serialize_to_pypeptdb_collections
+from pypeptdb.tests.db.lib import _clean_dataframe, _serialize_to_pypeptdb_collections
 
 from rdkit import Chem
 

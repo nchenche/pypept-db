@@ -19,8 +19,8 @@ __license__ = "MIT"
 
 import unittest
 
-from pyPept.sequence import Sequence
-from pyPept.molecule import Molecule
+from pypeptdb.core.sequence import Sequence
+from pypeptdb.core.molecule import Molecule
 
 ##########################################################################
 # Functions and classes

@@ -236,7 +236,7 @@ def get_inputs_parser():
     additional_type_group.add_argument(
         '--output', type=str, metavar='filename',
         required=True,
-        help="Name of the output SDF file used in pyPept.")
+        help="Name of the output SDF file used in pypeptdb.core.")
 
     # A repeated-use log option parser.
     log_options = parser.add_argument_group('Logging options')

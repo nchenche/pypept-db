@@ -1,8 +1,8 @@
 class SequenceConstants:
     """
-    A class to hold defaults values related to pyPept.Sequence objects.
+    A class to hold defaults values related to pypeptdb.core.Sequence objects.
     """
-    def_path = "pyPept.data"
+    def_path = "pypeptdb.core.data"
     def_lib_filename = "monomers.sdf"
     monomer_join = "-"
     chain_separator = "."

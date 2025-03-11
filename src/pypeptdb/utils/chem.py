@@ -5,8 +5,8 @@ from rdkit import Chem
 from rdkit.Chem import Descriptors
 from rdkit.Chem.Draw import rdMolDraw2D
 
-from pyPept.sequence import Sequence
-from pyPept.molecule import Molecule
+from pypeptdb.core.sequence import Sequence
+from pypeptdb.core.molecule import Molecule
 
 
 def get_isotope_index(mol: Chem.Mol) -> List[int]:

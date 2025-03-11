@@ -23,7 +23,7 @@ conda activate pypept
 ```
 The remaining dependencies such as BioPython and Pandas can be installed using the `setup.py` file provided in the code repository, which uses python package managers to easily install the required modules. The script can be called with:
 ```Bash
-pip install git+https://github.com/Boehringer-Ingelheim/pyPept.git
+pip install git+https://github.com/Boehringer-Ingelheim/pypeptdb.core.git
 ```
 
 That's all there is to installation! The main pyPept BILN-to-structure pipeline can be run using the provided `run_pyPept` CLI tool, or by using pyPept modules directly in a python script.
@@ -36,7 +36,7 @@ Examples of both cases are described in the next section.
 The script `run_pyPept` has the following arguments:
 
 ```  
-usage: run_pyPept.py [-h] (--biln string | --helm string | --fasta string) 
+usage: run_pypeptdb.core.py [-h] (--biln string | --helm string | --fasta string) 
                        [--depiction text] [--prefix text] [--secstruct text] [--noconf] 
                        [--imagesize dim dim] [--logfile filename] [-v]
 
@@ -91,12 +91,12 @@ If the functions want to be used separately, these are examples for each availab
 
 ```Python
 # PyPept modules
-from pyPept.sequence import Sequence
-from pyPept.sequence import correct_pdb_atoms
-from pyPept.molecule import Molecule
-from pyPept.converter import Converter
-from pyPept.conformer import Conformer
-from pyPept.conformer import SecStructPredictor
+from pypeptdb.core.sequence import Sequence
+from pypeptdb.core.sequence import correct_pdb_atoms
+from pypeptdb.core.molecule import Molecule
+from pypeptdb.core.converter import Converter
+from pypeptdb.core.conformer import Conformer
+from pypeptdb.core.conformer import SecStructPredictor
 
 # RDKit modules
 from rdkit import Chem
@@ -117,7 +117,7 @@ If the peptide is in HELM notation, it can be converted to BILN using the follow
 
 ```Python
 # Call the converter to change from HELM to BILN
-from pyPept.converter import Converter
+from pypeptdb.core.converter import Converter
 
 helm = "PEPTIDE1{[ac].D.T.H.F.E.I.A.[am]}$$$$V2.0"
 b = Converter(helm=helm)

@@ -39,12 +39,12 @@ from Bio.PDB import PDBParser
 from Bio.PDB import PDBIO
 
 # pyPept modules
-from pyPept.sequence import Sequence
-from pyPept.molecule import Molecule
-from utils.constants import SequenceConstants
-from pyPept.sequence import get_monomer_info
+from pypeptdb.core.sequence import Sequence
+from pypeptdb.core.molecule import Molecule
+from pypeptdb.utils.constants import SequenceConstants
+from pypeptdb.core.sequence import get_monomer_info
 
-from utils.data_pypept import load_sdf_data, get_unique_residues
+from pypeptdb.utils.data_pypept import load_sdf_data, get_unique_residues
 
 ##########################################################################
 # Functions and classes
@@ -52,9 +52,9 @@ from utils.data_pypept import load_sdf_data, get_unique_residues
 
 class ConformerConstants:
     """
-    A class to hold defaults values related to pyPept.Conformer objects.
+    A class to hold defaults values related to pypeptdb.core.Conformer objects.
     """
-    def_path = "pyPept.data"
+    def_path = "pypeptdb.core.data"
     def_matrix_filename = "matrix.txt"
     def_ss_filename = 'total_SS.txt'
     aminoacids = {"ALA": "A", "ASP": "D", "GLU": "E", "PHE": "F", "HIS": "H",
@@ -246,7 +246,7 @@ class Conformer:
         Generate the conformer with SS restraints and with the correct atom naming
 
         :param romol: pyPept and RDKit molecular object
-        :type romol: pyPept.molecule
+        :type romol: pypeptdb.core.molecule
         :param ss_value: SS predicted or provided by the user
         :type ss_value: str
         :param generate_pdb: Flag to generate or not a PDB file

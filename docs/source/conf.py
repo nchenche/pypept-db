@@ -5,15 +5,15 @@
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
-import pyPept
+import pypeptdb
 
-project = 'pyPept'
+project = 'pypeptdb'
 copyright = '2023 Boehringer-Ingelheim'
 author = 'Rodrigo Ochoa, J.B. Brown, Thomas Fox'
 show_authors = True
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
-modindex_common_prefix = ["pyPept."]
+modindex_common_prefix = ["pypeptdb."]
 
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.autosummary',
@@ -25,7 +25,7 @@ exclude_patterns = ['build', 'Thumbs.db', '.DS_Store']
 autosummary_generate = True
 
 
-version = pyPept.__version__
+version = pypeptdb.__version__ or "0.0.1"
 # The full version, including dev info
 release = version.replace("_", "")
 

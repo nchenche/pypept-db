@@ -40,7 +40,7 @@ class Molecule:
         """
         Initialize a Molecule object, optionally with a Sequence object.
         :param sequence:  input sequence to be converted to a molecule
-        :type sequence: pyPept.Sequence object.
+        :type sequence: pypeptdb.core.Sequence object.
         :param depiction: method to generate a 2D image
                           The local method is used by default.
                           The other value is 'rdkit'
@@ -59,7 +59,7 @@ class Molecule:
         self.__from_sequence(sequence)
 
         if not isinstance(self.mol, Chem.rdchem.Mol):
-            raise RuntimeError('pyPept.Molecule initialization failure: ' +
+            raise RuntimeError('pypeptdb.core.Molecule initialization failure: ' +
                 'problem initializing rdkit.ROMol')
 
     ############################################################################
@@ -258,10 +258,10 @@ class Molecule:
     ########################################################################################
     def __from_sequence(self, sequence):
         """
-        Function to convert a pyPept.Sequence object into a rdkit mol object.
+        Function to convert a pypeptdb.core.Sequence object into a rdkit mol object.
 
         :param sequence: Input sequence
-        :type sequence: pyPept.Sequence or None
+        :type sequence: pypeptdb.core.Sequence or None
 
         :return: rdkit.Chem.ROMol object.
         """

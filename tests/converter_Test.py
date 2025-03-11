@@ -19,7 +19,7 @@ __license__ = "MIT"
 
 import unittest
 
-from pyPept.converter import Converter
+from pypeptdb.core.converter import Converter
 
 class TestConverter(unittest.TestCase):
     """

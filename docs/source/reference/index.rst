@@ -6,7 +6,7 @@ References
 
 my_module
 ---------
-.. automodule:: utils.constants
+.. automodule:: pypeptdb.utils.constants
 .. autosummary::
     :toctree: generated
 

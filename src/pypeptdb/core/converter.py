@@ -24,8 +24,8 @@ import re
 import warnings
 
 # pyPept functions
-from utils.constants import SequenceConstants
-from pyPept.sequence import split_outside
+from pypeptdb.utils.constants import SequenceConstants
+from pypeptdb.core.sequence import split_outside
 
 ##########################################################################
 # Main class

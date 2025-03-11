@@ -28,11 +28,11 @@ from rdkit import Chem
 from rdkit.Chem import Draw
 
 # PyPept modules
-from pyPept.sequence import Sequence
-from pyPept.sequence import correct_pdb_atoms
-from pyPept.converter import Converter
-from pyPept.molecule import Molecule
-from pyPept.conformer import Conformer, ConformerConstants, SecStructPredictor
+from pypeptdb.core.sequence import Sequence
+from pypeptdb.core.sequence import correct_pdb_atoms
+from pypeptdb.core.converter import Converter
+from pypeptdb.core.molecule import Molecule
+from pypeptdb.core.conformer import Conformer, ConformerConstants, SecStructPredictor
 
 
 ################################################################################
@@ -151,7 +151,7 @@ def main():
         sys.exit(1)
 
     ########################################
-    # Handle as a pyPept.Sequence object
+    # Handle as a pypeptdb.core.Sequence object
     ########################################
     seq = Sequence(biln)
     seq = correct_pdb_atoms(seq)  # Correct PDB atom names

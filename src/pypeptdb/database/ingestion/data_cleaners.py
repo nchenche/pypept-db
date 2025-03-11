@@ -7,7 +7,7 @@ import pandas as pd
 from rdkit import Chem
 import swifter
 
-from utils.chem import get_canonic_smiles, get_descriptors, generate_rgroup_molecule
+from pypeptdb.utils.chem import get_canonic_smiles, get_descriptors, generate_rgroup_molecule
 
 
 def add_symbol(df: pd.DataFrame):

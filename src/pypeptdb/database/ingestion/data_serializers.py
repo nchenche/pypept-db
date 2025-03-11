@@ -11,10 +11,10 @@ from rdkit import Chem
 from rdkit.Chem import Descriptors
 import swifter
 
-from pypeptdb.utils.db_connection import get_db
+from pypeptdb.database.utils.db_connection import get_db
 
 
-from src.log import get_logger
+from pypeptdb.log import get_logger
 logger = get_logger(__name__)
 
 

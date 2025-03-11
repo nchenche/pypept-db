@@ -5,7 +5,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pyPeptDB"
+name = "pypeptdb"
 version = "1.0.0"
 requires-python = ">=3.9"
 classifiers = [
@@ -35,7 +35,7 @@ dynamic = [
 where = ["src"]
 
 [tool.setuptools.package-data]
-"pyPept.data" = ["*.txt", "*.rst", "*.json", "*.sdf"]
+"core.data" = ["*.txt", "*.rst", "*.json", "*.sdf"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = "requirements.txt"}
@@ -57,5 +57,5 @@ push            = true
 "pyproject.toml" = ['current_version = "{version}"', 'version = "{version}"']
 
 [project.scripts]
-run_pyPept = "pyPept.interfaces.run_pyPept:main"
-run_ingestion = "pypeptdb.scripts.run_ingestion:main"
+run_pyPept = "pypeptdb.core.interfaces.run_pyPept:main"
+run_ingestion = "pypeptdb.database.scripts.run_ingestion:main"

@@ -1,12 +1,12 @@
 from pandas import DataFrame
 
-from pypeptdb.utils.db_connection import get_db
-from pypeptdb.ingestion import data_cleaners
-from pypeptdb.ingestion.data_serializers import (
+from pypeptdb.database.utils.db_connection import get_db
+from pypeptdb.database.ingestion import data_cleaners
+from pypeptdb.database.ingestion.data_serializers import (
     collect_sdf_document,
     serialize_to_pypeptdb_collections
 )
-from utils.chem import get_canonic_smiles, generate_rgroup_molecule
+from pypeptdb.utils.chem import get_canonic_smiles, generate_rgroup_molecule
 
 from rdkit import Chem
 
@@ -31,7 +31,7 @@ def _serialize_to_pypeptdb_collections(df: DataFrame):
     Returns:
         dict: Two collections: 'monomers' and 'properties'.
     """
-    from src.pypeptdb.ingestion.data_serializers import serialize_monomer_images, compute_molecule_properties
+    from pypeptdb.database.ingestion.data_serializers import serialize_monomer_images, compute_molecule_properties
 
     monomer_images = df.apply(serialize_monomer_images, axis=1).to_list()
     df.drop('image_binary', axis=1, inplace=True)

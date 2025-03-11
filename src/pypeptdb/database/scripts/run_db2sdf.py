@@ -2,7 +2,7 @@ import argparse
 from datetime import datetime
 from pathlib import Path
 
-from utils.data_pypept import get_combined_sdf
+from pypeptdb.utils.data_pypept import get_combined_sdf
 
 
 

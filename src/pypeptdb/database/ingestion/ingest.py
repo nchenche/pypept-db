@@ -1,11 +1,11 @@
 from pathlib import Path
-from pypeptdb.ingestion.data_cleaners import clean_dataframe
-from pypeptdb.ingestion.data_serializers import serialize_to_pypeptdb_collections, collect_sdf_document, create_mongodb_indexes
-from pypeptdb.utils.db_connection import get_db
+from pypeptdb.database.ingestion.data_cleaners import clean_dataframe
+from pypeptdb.database.ingestion.data_serializers import serialize_to_pypeptdb_collections, collect_sdf_document, create_mongodb_indexes
+from pypeptdb.database.utils.db_connection import get_db
 
-from utils.data_pypept import load_sdf_data, read_sdf_file
+from pypeptdb.utils.data_pypept import load_sdf_data, read_sdf_file
 
-from log import get_logger
+from pypeptdb.log import get_logger
 logger = get_logger(__name__)
 
 

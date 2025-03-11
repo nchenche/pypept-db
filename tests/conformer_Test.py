@@ -20,11 +20,11 @@ __license__ = "MIT"
 import unittest
 import os
 
-from pyPept.sequence import Sequence
-from pyPept.sequence import correct_pdb_atoms
-from pyPept.molecule import Molecule
-from pyPept.conformer import Conformer
-from pyPept.conformer import SecStructPredictor
+from pypeptdb.core.sequence import Sequence
+from pypeptdb.core.sequence import correct_pdb_atoms
+from pypeptdb.core.molecule import Molecule
+from pypeptdb.core.conformer import Conformer
+from pypeptdb.core.conformer import SecStructPredictor
 
 ##########################################################################
 # Functions and classes

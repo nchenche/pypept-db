@@ -1,12 +1,12 @@
 import argparse
 
-from pypeptdb.ingestion.ingest import ingest_data_to_pypeptdb
+from pypeptdb.database.ingestion.ingest import ingest_data_to_pypeptdb
 
 
 def get_parser():
     parser = argparse.ArgumentParser(
         prog='pypept-db data ingestion',
-        description='Command line to ingest data from an SDF file to the pypept database.'
+        description='Command line to ingest data from an SDF file to the pypept pypeptdb.database.'
     )
 
     parser.add_argument(

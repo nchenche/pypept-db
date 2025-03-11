@@ -4,13 +4,13 @@ from pathlib import Path
 import re
 from typing import Iterable, List, Optional
 
-from pypeptdb.utils.db_connection import get_db
+from pypeptdb.database.utils.db_connection import get_db
 import pandas as pd
 from rdkit import Chem
 from rdkit.Chem import PandasTools
-from utils.constants import SequenceConstants
+from pypeptdb.utils.constants import SequenceConstants
 
-from log import get_logger
+from pypeptdb.log import get_logger
 logger = get_logger(__name__)
 
 
@@ -33,7 +33,7 @@ def process_smiles(smiles, sanitize=True, removeHs=True):
 
 def read_sdf_file(sdf_file_path: str|Path) -> str:
     if not sdf_file_path:
-        from utils.constants import SequenceConstants
+        from pypeptdb.utils.constants import SequenceConstants
         default_monomer_df_filepath = files(SequenceConstants.def_path).joinpath(SequenceConstants.def_lib_filename)
         sdf_file_path = default_monomer_df_filepath
 
@@ -46,7 +46,7 @@ def read_sdf_file(sdf_file_path: str|Path) -> str:
 def load_sdf_data(from_db: bool=False, from_file: str|Path=None, residues: Iterable=[], mock: bool=False) -> pd.DataFrame:
     try:
         if from_db:
-            logger.debug("Loading SDF data to dataframe from database...")
+            logger.debug("Loading SDF data to dataframe from pypeptdb.database...")
             combined_sdf = get_combined_sdf(symbols=set(residues), mock=mock)
 
             from io import BytesIO

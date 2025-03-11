@@ -33,8 +33,8 @@ import numpy as np
 from rdkit import Chem
 from rdkit.Chem import PandasTools
 
-from utils.constants import SequenceConstants
-from utils.data_pypept import load_sdf_data, get_unique_residues
+from pypeptdb.utils.constants import SequenceConstants
+from pypeptdb.utils.data_pypept import load_sdf_data, get_unique_residues
 
 
 ##########################################################################
@@ -52,7 +52,7 @@ class Sequence:
     def __init__(self, input_biln, path=SequenceConstants.def_path,
                  monomer_lib=SequenceConstants.def_lib_filename):
         """
-        Instantiate a pyPept.Sequence object with the input BILN sequence.
+        Instantiate a pypeptdb.core.Sequence object with the input BILN sequence.
 
         :param input_biln: BILN representation of the peptide
         :type input_biln: str
@@ -470,7 +470,7 @@ class Sequence:
 
     ############################################################################
     def is_valid(self):
-        """Flag if the initialized pyPept.Sequence is valid.
+        """Flag if the initialized pypeptdb.core.Sequence is valid.
         This includes check of R-groups present in the monomer dictionary,
         and R-group connectivity when explicitly given.
 
@@ -481,7 +481,7 @@ class Sequence:
     ############################################################################
     def __bool__(self):
         """
-        Returns if a pyPept.Sequence object has been constructed with a valid
+        Returns if a pypeptdb.core.Sequence object has been constructed with a valid
         BILN.
 
         :seealso: is_valid
@@ -720,7 +720,7 @@ def correct_pdb_atoms(seq: Sequence, path=SequenceConstants.def_path,
     Pipeline to assign the correct atom names to the pyPept object
 
     :param seq: pyPept Sequence object
-    :type seq: pyPept.sequence
+    :type seq: pypeptdb.core.sequence
     :return: the modified pyPept Sequence with correct atom names
     """
 
