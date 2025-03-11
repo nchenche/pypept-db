@@ -14,7 +14,7 @@ import swifter
 from pypeptdb.utils.db_connection import get_db
 
 
-from log import get_logger
+from src.log import get_logger
 logger = get_logger(__name__)
 
 
@@ -67,9 +67,9 @@ def serialize_monomer_images(row):
     return image
 
 
-def collect_sdf_from_file(path: str | Path = None):
+def collect_sdf_document(sdf_content: str):
     """
-    Parse an SDF file containing multiple monomer structures and extract the SDF content 
+    Parse an SDF string containing multiple monomer structures and extract the SDF content 
     for each monomer as a document containing the monomer's symbol, SDF content, and 
     a timestamp indicating when the document was created.
 
@@ -104,7 +104,7 @@ def collect_sdf_from_file(path: str | Path = None):
 
     Example:
         ```python
-        monomers = collect_sdf_from_file('/path/to/monomers.sdf')
+        monomers = collect_sdf_document('/path/to/monomers.sdf')
         
         # Access the document for the monomer with symbol 'A'
         alanine_doc = next(m for m in monomers if m['symbol'] == 'A')
@@ -119,16 +119,6 @@ def collect_sdf_from_file(path: str | Path = None):
         - If no `path` is provided, it defaults to the **SequenceConstants** path.
         - The **created_at** timestamp is generated using `datetime.now(timezone.utc)` to ensure UTC-compliant timestamps.
     """
-    if path:
-        sdf_file_path = path
-    else:
-        from utils.constants import SequenceConstants
-        default_monomer_df_filepath = files(SequenceConstants.def_path).joinpath(SequenceConstants.def_lib_filename)
-        sdf_file_path = default_monomer_df_filepath
-
-    # Read the SDF file content
-    with open(sdf_file_path, 'r') as file:
-        sdf_content = file.read()
 
     # Split the file content by $$$$, which indicates the end of an SDF block
     monomer_blocks = sdf_content.split('$$$$\n')

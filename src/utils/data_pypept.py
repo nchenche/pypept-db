@@ -7,6 +7,7 @@ from typing import Iterable, List, Optional
 from pypeptdb.utils.db_connection import get_db
 import pandas as pd
 from rdkit import Chem
+from rdkit.Chem import PandasTools
 from utils.constants import SequenceConstants
 
 from log import get_logger
@@ -30,12 +31,24 @@ def process_smiles(smiles, sanitize=True, removeHs=True):
     return mol
 
 
-def load_sdf_data(from_db=False, from_file: str|Path=None, residues: Iterable=[]) -> pd.DataFrame:
+def read_sdf_file(sdf_file_path: str|Path) -> str:
+    if not sdf_file_path:
+        from utils.constants import SequenceConstants
+        default_monomer_df_filepath = files(SequenceConstants.def_path).joinpath(SequenceConstants.def_lib_filename)
+        sdf_file_path = default_monomer_df_filepath
+
+    # Read the SDF file content
+    with open(sdf_file_path, 'r') as file:
+        sdf_content = file.read()
+    return sdf_content
+
+
+def load_sdf_data(from_db: bool=False, from_file: str|Path=None, residues: Iterable=[], mock: bool=False) -> pd.DataFrame:
     try:
         if from_db:
             logger.debug("Loading SDF data to dataframe from database...")
-            combined_sdf = get_combined_sdf(set(residues))
-            
+            combined_sdf = get_combined_sdf(symbols=set(residues), mock=mock)
+
             from io import BytesIO
             sdf_io = BytesIO(combined_sdf.encode('utf-8'))
             df = get_monomers_df(sdf_io)
@@ -55,7 +68,7 @@ def load_sdf_data(from_db=False, from_file: str|Path=None, residues: Iterable=[]
         raise
 
 
-def get_combined_sdf(symbols: Optional[Iterable] = None) -> str:
+def get_combined_sdf(symbols: Optional[Iterable] = None, mock: bool=False) -> str:
     """
     Fetch and combine the SDF data for the given symbols from the pypeptdb collection.
     
@@ -84,7 +97,7 @@ def get_combined_sdf(symbols: Optional[Iterable] = None) -> str:
         >>> print(combined_sdf)
     """
     # Connect to pypeptdb
-    db = get_db()
+    db = get_db(mock=mock)
     collection = db['global_sdf']
     
     # Define the pipeline

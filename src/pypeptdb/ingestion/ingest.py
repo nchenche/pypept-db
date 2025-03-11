@@ -1,9 +1,9 @@
 from pathlib import Path
 from pypeptdb.ingestion.data_cleaners import clean_dataframe
-from pypeptdb.ingestion.data_serializers import serialize_to_pypeptdb_collections, collect_sdf_from_file, create_mongodb_indexes
+from pypeptdb.ingestion.data_serializers import serialize_to_pypeptdb_collections, collect_sdf_document, create_mongodb_indexes
 from pypeptdb.utils.db_connection import get_db
 
-from utils.data_pypept import load_sdf_data
+from utils.data_pypept import load_sdf_data, read_sdf_file
 
 from log import get_logger
 logger = get_logger(__name__)
@@ -24,13 +24,14 @@ def ingest_data_to_pypeptdb(source: str|Path):
         
         # 2. Collect/Parse SDF data
         logger.info('Step 2: Parsing SDF monomers data...')
-        sdf = collect_sdf_from_file(path=source)
-        
+        sdf_content = read_sdf_file(sdf_file_path=source)
+        sdf_document = collect_sdf_document(sdf_content=sdf_content)
+
         # 3. Insert SDF data collection to db
         db = get_db()
         logger.info(f'Step 3: Ingestion of SDF monomers data to {db.name} as "global_sdf" collection...')
         db["global_sdf"].drop()
-        db["global_sdf"].insert_many(sdf)
+        db["global_sdf"].insert_many(sdf_document)
 
         # 4. Load SDF from db ; required to compute monomers properties
         logger.info(f'Step 4: Loading SDF data collection from {db.name}...')
