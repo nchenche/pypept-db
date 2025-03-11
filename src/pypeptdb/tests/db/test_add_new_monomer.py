@@ -102,7 +102,7 @@ def test_combined_sdf(mock_db):
 
 
 def test_load_sdf_from_db():
-    df = load_sdf_data(from_db=True, mock=True)
+    df = load_sdf_data(from_db=True, mock=True, residues=['mc'])
 
     expected_columns = [
         'm_name', 'm_abbr', 'm_type', 'm_subtype', 
@@ -125,7 +125,7 @@ def test_load_sdf_from_db():
 
 
 def test_clean_dataframe():
-    df = load_sdf_data(from_db=True, mock=True)
+    df = load_sdf_data(from_db=True, mock=True, residues=['mc'])
     df_transformed = _clean_dataframe(df)
 
     assert 'smiles' in df_transformed.columns
@@ -137,7 +137,7 @@ def test_clean_dataframe():
 
 
 def test_serialize_to_pypeptdb_collections():
-    df = load_sdf_data(from_db=True, mock=True)
+    df = load_sdf_data(from_db=True, mock=True, residues=['mc'])
     df_transformed = _clean_dataframe(df)
 
     pypeptdb_collections = _serialize_to_pypeptdb_collections(df_transformed)
@@ -153,7 +153,7 @@ def test_serialize_to_pypeptdb_collections():
 
 
 def test_insert_monomer_to_global_monomers(mock_db):
-    df = load_sdf_data(from_db=True, mock=True)
+    df = load_sdf_data(from_db=True, mock=True, residues=['mc'])
     df_transformed = _clean_dataframe(df)
     pypeptdb_collections = _serialize_to_pypeptdb_collections(df_transformed)
 
@@ -164,7 +164,7 @@ def test_insert_monomer_to_global_monomers(mock_db):
 
 
 def test_insert_images_to_monomer_images(mock_db):
-    df = load_sdf_data(from_db=True, mock=True)
+    df = load_sdf_data(from_db=True, mock=True, residues=['mc'])
     df_transformed = _clean_dataframe(df)
     pypeptdb_collections = _serialize_to_pypeptdb_collections(df_transformed)
 
@@ -175,7 +175,7 @@ def test_insert_images_to_monomer_images(mock_db):
 
 
 def test_insert_properties_to_global_properties(mock_db):
-    df = load_sdf_data(from_db=True, mock=True)
+    df = load_sdf_data(from_db=True, mock=True, residues=['mc'])
     df_transformed = _clean_dataframe(df)
     pypeptdb_collections = _serialize_to_pypeptdb_collections(df_transformed)
 
@@ -184,4 +184,46 @@ def test_insert_properties_to_global_properties(mock_db):
     assert mock_db["global_properties"].count_documents({}) == 1
     assert mock_db["global_properties"].find_one()["symbol"] == "mc"
 
+
+def test_insert_new_monomer_full_process(mock_db):
+    """
+    Insert a new monomer to the global monomers collection.
+    Args:
+        sdf_content (str): SDF content of the new monomer.
+    Returns:
+        None
+    """
+    sdf_content = SDF_MONOMER
+
+    # Get sdf document and insert it to the global_sdf collection
+    sdf_document = collect_sdf_document(sdf_content)
+    mock_db["global_sdf"].drop()
+    mock_db["global_sdf"].insert_one(sdf_document[0])
+
+    # Load the sdf data from the db
+    df = load_sdf_data(from_db=True, mock=True, residues=['mc'])
+
+    # Transform the dataframe
+    df_transformed = _clean_dataframe(df)
+
+    # Serialize the dataframe to pypeptdb collections
+    pypeptdb_collections = _serialize_to_pypeptdb_collections(df_transformed)
+
+    # Insert the monomer to the global monomers collection
+    mock_db["global_monomers"].drop()
+    mock_db["global_monomers"].insert_one(pypeptdb_collections["monomers"][0])
+    assert mock_db["global_monomers"].count_documents({}) == 1
+    assert mock_db["global_monomers"].find_one()["symbol"] == "mc"
+
+    # Insert the monomer image to the monomer_images collection
+    mock_db["monomer_images"].drop()
+    mock_db["monomer_images"].insert_one(pypeptdb_collections["images"][0])
+    assert mock_db["monomer_images"].count_documents({}) == 1
+    assert mock_db["monomer_images"].find_one()["symbol"] == "mc"
+
+    # Insert the monomer properties to the global_properties collection
+    mock_db["global_properties"].drop()
+    mock_db["global_properties"].insert_one(pypeptdb_collections["properties"][0])
+    assert mock_db["global_properties"].count_documents({}) == 1
+    assert mock_db["global_properties"].find_one()["symbol"] == "mc"
 

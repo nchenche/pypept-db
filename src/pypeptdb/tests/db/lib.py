@@ -21,8 +21,6 @@ def _clean_dataframe(df: DataFrame):
     return df
 
 
-
-
 def _serialize_to_pypeptdb_collections(df: DataFrame):
     """
     Serialize the DataFrame to MongoDB-compatible collections.
@@ -43,3 +41,4 @@ def _serialize_to_pypeptdb_collections(df: DataFrame):
         "properties": properties,
         "images": monomer_images
     }
+
