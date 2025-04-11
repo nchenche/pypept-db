@@ -73,6 +73,101 @@ class ConformerConstants:
 # End of Conformer class-related constants definition.
 ##########################################################################
 
+def _assign_helical_conformation(ss_value, backbone_atoms, bounds):
+    """
+    Assign helical conformation to the backbone atoms
+
+    :param ss_value: Secondary structure value
+    :type ss_value: str
+    :param backbone_atoms: Backbone atoms of the molecule
+    :type backbone_atoms: list
+    :param bounds: Distance matrix of the molecule
+    :type bounds: numpy.ndarray
+    """
+    for i, ele in enumerate(ss_value):
+        if i < len(ss_value) - 4:
+            if ele == 'H':  # and ss[i + 4] == 'H':
+                ind_o = backbone_atoms[i][-1]
+                ind_n = backbone_atoms[i + 4][0]
+                bounds[ind_o, ind_n] = 3.2
+
+    return bounds
+
+
+def _assign_sheet_conformation(ss_value, backbone_atoms, bounds):
+    """
+    Assign beta sheet conformation to the backbone atoms
+    :param ss_value: Secondary structure value
+    :type ss_value: str
+    :param backbone_atoms: Backbone atoms of the molecule
+    :type backbone_atoms: list
+    :param bounds: Distance matrix of the molecule
+    :type bounds: numpy.ndarray
+    """    
+    fragment = []
+    segments = []
+    flag = 0
+    for i, ele in enumerate(ss_value):
+        if i == 0:
+            fragment = []
+        if ele == 'E':
+            flag = 1
+            fragment.append(i)
+        else:
+            if flag == 1:
+                segments.append(fragment)
+                flag = 0
+            fragment = []
+    if len(fragment) > 0:
+        segments.append(fragment)
+
+    if len(segments) == 2 and len(segments[0]) == len(segments[1]):
+        for i, ele in enumerate(segments[0]):
+            ind_o = backbone_atoms[ele][-1]
+            try:
+                ind_n = backbone_atoms[segments[1][(i + 1) * -1]][0]
+            except IndexError:
+                continue
+            bounds[ind_o, ind_n] = 3.2
+
+    return bounds
+
+
+def write_pdb_output(output_name, pdb_mol, ss_value):
+    """
+    Write the PDB output file with the provided name and secondary structure value.
+
+    :param output_name: Name of the output PDB file
+    :type output_name: str
+    :param pdb_mol: PDB molecule string
+    :type pdb_mol: str
+    :param ss_value: Secondary structure value
+    :type ss_value: str
+    """
+    with open(f'{output_name}.pdb', 'w', encoding="utf8") as f:
+        f.write(pdb_mol)
+
+    # Fix the hydrogen positions in the final PDB file
+    parser = PDBParser()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        reference = parser.get_structure('REF', f'{output_name}.pdb')
+
+    # Remove the hydrogen HXT atoms
+    chain = reference[0]['A']
+    try:
+        ids = [atom.id for atom in chain[len(ss_value or '')] if atom.id == "HXT"]
+        for i in ids:
+            chain[len(ss_value or '')].detach_child(i)
+    except KeyError:
+        print("No HXT atoms to detach")
+
+    # Saving the new structure
+    io_output = PDBIO()
+    io_output.set_structure(reference)
+    io_output.save(f"{output_name}.pdb")
+
+
 class Conformer:
     """
     Class with static methods to complement the prediction of conformers
@@ -238,124 +333,79 @@ class Conformer:
                 atomname = f'{atomname:>4}'
                 atom.GetPDBResidueInfo().SetName(atomname)
 
-    ########################################################################################
+
     @staticmethod
-    def generate_conformer(romol, ss_value, generate_pdb=False,
-                           output_name='structure'):
+    def generate_conformer(romol, ss_value=None, generate_pdb=False, isRandomCoordsWithSS=False, output_name='structure'):
         """
         Generate the conformer with SS restraints and with the correct atom naming
 
         :param romol: pyPept and RDKit molecular object
         :type romol: pypeptdb.core.molecule
         :param ss_value: SS predicted or provided by the user
-        :type ss_value: str
+        :type ss_value: str or None
         :param generate_pdb: Flag to generate or not a PDB file
         :param generatePDB: bool
+        :param isRandomCoordsWithSS: Flag to use random coordinates with SS restraints
+        :type isRandomCoordsWithSS: bool
         :param output_name: Name of the PDB file generated. A default value is provided
         :type output_name: str
 
         :return: RDKit mol object with the conformer following SS restraints and correct atom names
         """
-        
-        # Sanity check on SS symbols:
-        invalid = [v for v in ss_value 
-                    if v not in ConformerConstants.expected_ss_symbols]
-        if len(invalid) > 0:
-            raise RuntimeError(
-                "%i invalid secondary structure symbols (not %s): %s ." %
-                (len(invalid), 
-                 " ".join(ConformerConstants.expected_ss_symbols),
-                 " ".join(invalid)))
 
-        # Fix hydrogen atom names
         romol = Chem.AddHs(romol)
         Conformer.fix_hydrogen_atom_names(romol)
+        
+        # Skip all secondary structure if not provided
+        if ss_value:
+            # Sanity check on SS symbols:
+            invalid = [v for v in ss_value 
+                        if v not in ConformerConstants.expected_ss_symbols]
+            if len(invalid) > 0:
+                raise RuntimeError(
+                    "%i invalid secondary structure symbols (not %s): %s ." %
+                    (len(invalid), 
+                    " ".join(ConformerConstants.expected_ss_symbols),
+                    " ".join(invalid)))
 
-        # Get the backbone atoms to assign the SS restraints
-        backbone_smiles = Chem.MolFromSmiles('NCC(=O)')
-        backbone_atoms = romol.GetSubstructMatches(backbone_smiles)
-        bounds = rdDistGeom.GetMoleculeBoundsMatrix(romol)
+            # Get the backbone atoms to assign the SS restraints
+            backbone_smiles = Chem.MolFromSmiles('NCC(=O)')
+            backbone_atoms = romol.GetSubstructMatches(backbone_smiles)
+            bounds = rdDistGeom.GetMoleculeBoundsMatrix(romol)
 
-        # Assignment of helical conformation
-        for i, ele in enumerate(ss_value):
-            if i < len(ss_value) - 4:
-                if ele == 'H':  # and ss[i + 4] == 'H':
-                    ind_o = backbone_atoms[i][-1]
-                    ind_n = backbone_atoms[i + 4][0]
-                    bounds[ind_o, ind_n] = 3.2
+            # Assignment of helical conformation
+            bounds = _assign_helical_conformation(ss_value, backbone_atoms, bounds)
 
-        # Assignment of beta sheets
-        fragment = []
-        segments = []
-        flag = 0
-        for i, ele in enumerate(ss_value):
-            if i == 0:
-                fragment = []
-            if ele == 'E':
-                flag = 1
-                fragment.append(i)
-            else:
-                if flag == 1:
-                    segments.append(fragment)
-                    flag = 0
-                fragment = []
-        if len(fragment) > 0:
-            segments.append(fragment)
+            # Assignment of beta sheets
+            bounds = _assign_sheet_conformation(ss_value, backbone_atoms, bounds)
 
-        if len(segments) == 2 and len(segments[0]) == len(segments[1]):
-            for i, ele in enumerate(segments[0]):
-                ind_o = backbone_atoms[ele][-1]
-                try:
-                    ind_n = backbone_atoms[segments[1][(i + 1) * -1]][0]
-                except IndexError:
-                    continue
-                bounds[ind_o, ind_n] = 3.2
-
-        # Generate the new distance matrix and predict the conformer
-        try:
-            DistanceGeometry.DoTriangleSmoothing(bounds)
+            # Generate the new distance matrix and predict the conformer
+            try:
+                DistanceGeometry.DoTriangleSmoothing(bounds)
+                parameters = AllChem.ETKDGv3()
+                parameters.randomSeed = 0xf00d
+                parameters.SetBoundsMat(bounds)
+                parameters.useRandomCoords = isRandomCoordsWithSS
+            except FileExistsError:
+                warnings.warn("Failed to generate the conformer in RDKit")
+                sys.exit(1)
+        else:
+            # If no secondary structure is provided, just generate the conformer
             parameters = AllChem.ETKDGv3()
             parameters.randomSeed = 0xf00d
-            parameters.SetBoundsMat(bounds)
             parameters.useRandomCoords = True
-            AllChem.EmbedMolecule(romol, parameters)
-            # AllChem.UFFOptimizeMolecule(romol)
-            pdb_mol = Chem.MolToPDBBlock(romol)
-        except FileExistsError:
-            warnings.warn("Failed to generate the conformer in RDKit")
-            sys.exit(1)
+
+        # Generate the conformer
+        AllChem.EmbedMolecule(romol, parameters)
+        # AllChem.UFFOptimizeMolecule(romol)
+        pdb_mol = Chem.MolToPDBBlock(romol)
 
         # Store the conformer in a new pdb file
         if generate_pdb:
-            # Saving the RDKit PDB file to correct the hydrogens later with BioPython
-            pdb_predict = open(f'{output_name}.pdb', 'w', encoding="utf8")
-            pdb_predict.write(pdb_mol)
-            pdb_predict.close()
-
-            # Fix the hydrogen positions in the final PDB file
-            parser = PDBParser()
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                reference = parser.get_structure('REF', f'{output_name}.pdb')
-
-            chain = reference[0]['A']
-
-            ids = []
-            for atom in chain[len(ss_value)]:
-                atom_id = atom.id
-                if atom_id == "HXT":
-                    ids.append(atom_id)
-            for i in ids:
-                chain[len(ss_value)].detach_child(i)
-
-            # Saving the new structure
-            io_output = PDBIO()
-            io_output.set_structure(reference)
-            io_output.save(f"{output_name}.pdb")
+            write_pdb_output(output_name, pdb_mol, ss_value)
 
         return romol
 
-    ## End of the Conformer class declaration.
 
 ########################################################################################
 class SecStructPredictor:

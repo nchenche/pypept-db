@@ -21,6 +21,7 @@ __version__ = "1.0"
 # System libraries
 import argparse
 import logging
+from pathlib import Path
 import sys
 
 # RDKit
@@ -51,10 +52,12 @@ def get_inputs_parser():
         '--biln', type=str, metavar='string',
         required=False,
         help="BILN string with the peptide to analyze.")
+    
     input_type_group.add_argument(
         '--helm', type=str, metavar='string',
         required=False,
         help="HELM string with the peptide to analyze.")
+    
     input_type_group.add_argument(
         '--fasta', type=str, metavar='string',
         required=False,
@@ -72,21 +75,36 @@ def get_inputs_parser():
             option (such as for the molecule PEPTIDEPEPTIDEPEPTIDE).
             """
             )
+    
     additional_type_group.add_argument(
         '--prefix', type=str, metavar='text',
         required=False, default='peptide',
         help="Name used in the output files. The default is 'peptide'.")
+    
+    additional_type_group.add_argument(
+        '--outpath', '-O', type=str, metavar='text',
+        required=False, default='.',
+        help="Path of the output file. The path will be created if it does not exist. Defaults to '.'")
+    
     additional_type_group.add_argument(
         '--secstruct', type=str, metavar='text',
         required=False, default=None,
         help="Use the given secondary structure. " + \
              "Otherwise, the secondary structure is predicted and used.")
+    
+    additional_type_group.add_argument(
+        '--without-ss', action="store_true",
+        required=False,
+        help="Flag used to indicate that no secondary structure constraint will be predicted. No effect if --secstruct is used.")
+    
     additional_type_group.add_argument(
         '--sdf2D', action="store_true",
         help="Generate a 2D SDF file of the peptide.")
+    
     additional_type_group.add_argument(
         '--noconf', action="store_true",
         help="Do not generate a conformer for the peptide.")
+    
     additional_type_group.add_argument(
         '--imagesize', type=int, metavar='dim', nargs=2,
         required=False, default=_def_image_size,
@@ -115,6 +133,15 @@ def main():
         parents=(get_inputs_parser(),
                  ))
     args = useParser.parse_args()
+
+    # Update without_ss flag if secstruct is provided
+    if args.secstruct is not None:
+        args.without_ss = False
+
+    # Create outfile path from prefix and outpath
+    outpath = Path(args.outpath)
+    outpath.mkdir(parents=True, exist_ok=True)
+    args.prefix = str(outpath / args.prefix)
 
     # Setup typical logger for messages to stderr.
     log_stream = logging.StreamHandler(
@@ -183,35 +210,40 @@ def main():
 
     # Create the peptide conformer with correct atom names and SS
     if not args.noconf:
-        logger.info(
-            "3. Predicting the peptide conformer")
-        fasta = Conformer.get_peptide(biln)
-        if args.secstruct is None:
-            ss_input = SecStructPredictor.predict_active_ss(fasta)
+        logger.info("3. Predicting the peptide conformer")
+
+        if args.without_ss:
+            # No secondary structure prediction
+            ss_input = None
+            print("No secondary structure prediction will be performed.")
         else:
-            # Sanity check on secondary structure symbols:
-            invalid = [v for v in args.secstruct
-                       if v not in ConformerConstants.expected_ss_symbols]
-            if len(invalid) > 0:
-                raise RuntimeError(
-                    "{} invalid secondary structure symbols (not {}): {} .".format(
-                        len(invalid),
-                        " ".join(ConformerConstants.expected_ss_symbols),
-                        " ".join(invalid)))
-            if len(args.secstruct) == len(fasta):
-                ss_input = args.secstruct
+            fasta = Conformer.get_peptide(biln)
+            if args.secstruct is None:
+                ss_input = SecStructPredictor.predict_active_ss(fasta)
             else:
-                logger.error(
-                    "Check the length of the input secondary structure. " + \
-                    "It should be the same than the peptide main chain " + \
-                    "(without capping groups and extensions). " + \
-                    f"Peptide input length: {len(fasta)}, " + \
-                    f"Secondary Structure input length: {len(args.secstruct)}."
-                    )
-                exit(3)
-            print(f"The provided Secondary Structure is: {ss_input}")
-        romol = Conformer.generate_conformer(romol, ss_input, 
-                    generate_pdb=True, output_name=args.prefix)
+                # Sanity check on secondary structure symbols:
+                invalid = [v for v in args.secstruct
+                        if v not in ConformerConstants.expected_ss_symbols]
+                if len(invalid) > 0:
+                    raise RuntimeError(
+                        "{} invalid secondary structure symbols (not {}): {} .".format(
+                            len(invalid),
+                            " ".join(ConformerConstants.expected_ss_symbols),
+                            " ".join(invalid)))
+                if len(args.secstruct) == len(fasta):
+                    ss_input = args.secstruct
+                else:
+                    logger.error(
+                        "Check the length of the input secondary structure. " + \
+                        "It should be the same than the peptide main chain " + \
+                        "(without capping groups and extensions). " + \
+                        f"Peptide input length: {len(fasta)}, " + \
+                        f"Secondary Structure input length: {len(args.secstruct)}."
+                        )
+                    exit(3)
+                print(f"The provided Secondary Structure is: {ss_input}")
+
+        romol = Conformer.generate_conformer(romol, ss_value=ss_input, generate_pdb=True, output_name=args.prefix)
         outFileList.append(f'{args.prefix}.pdb')
     
     ########################################
