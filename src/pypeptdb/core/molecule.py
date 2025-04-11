@@ -352,7 +352,7 @@ class Molecule:
         elif fmt == 'PDB':
             mol = Chem.MolToPDBBlock(self.mol)
         elif fmt == 'Smiles':
-            mol = Chem.MolToSmiles(self.mol)
+            mol = Chem.MolToSmiles(self.mol, isomericSmiles=True, canonical=True)
         elif fmt == 'ROMol':
             mol = self.mol
         else:
