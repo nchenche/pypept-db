@@ -11,7 +11,7 @@ db = get_db()
 output_collection = db["generated_structures"]
 
 
-def save_structure_metadata(sequence_biln: str, smiles: str, pdb: str, sdf: str, pdf_filename: str, pdb_filename: str, zip_filename: str, user_id: str=None, note: str=None) -> str:
+def save_structure_metadata(sequence_biln: str, smiles: str, pdb: str, sdf: str, pdb_filename: str, zip_filename: str, user_id: str=None, pdf_filename: str, note: str=None) -> str:
     """Store the metadata of a generated structure in the database.
 
     Args:
@@ -19,9 +19,9 @@ def save_structure_metadata(sequence_biln: str, smiles: str, pdb: str, sdf: str,
         smiles (str): SMILES representation
         pdb (str): PDB string content
         sdf (str): SDF string content
-        pdf_filename (str): PDF report filename
         pdb_filename (str): PDB filename
         zip_filename (str): ZIP filename
+        pdf_filename (str, optional): PDF report filename
         user_id (str, optional): User ID. Defaults to None.
         note (str, optional): Note to describe the output. Defaults to None.
     Returns:
