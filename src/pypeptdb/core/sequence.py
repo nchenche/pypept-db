@@ -193,7 +193,7 @@ class Sequence:
         # Fields required for the addition of the monomer
         keys_needed = ['m_name', 'm_abbr', 'm_name_in_biln', 'm_type',
                        'm_subtype', 'm_chainID', 'm_Rgroups',
-                       'm_RgroupIdx', 'm_attachmentPointIdx', 'm_romol']
+                       'm_RgroupIdx', 'm_attachmentPointIdx', 'm_romol', 'pdbName']
 
         # check if all necessary keys are available in the monomer definition
         for key in keys_needed:
