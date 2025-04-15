@@ -46,6 +46,10 @@ from pypeptdb.core.sequence import get_monomer_info
 
 from pypeptdb.utils.data_pypept import load_sdf_data, get_unique_residues
 
+from pypeptdb.log import get_logger
+logger = get_logger(__name__)
+
+
 ##########################################################################
 # Functions and classes
 ##########################################################################
@@ -153,15 +157,22 @@ def write_pdb_output(output_name, pdb_mol, ss_value):
         warnings.simplefilter("ignore")
         reference = parser.get_structure('REF', f'{output_name}.pdb')
 
-    # Remove the hydrogen HXT atoms
-    chain = reference[0]['A']
+
+
+    # Remove all HXT atoms
     try:
-        ids = [atom.id for atom in chain[len(ss_value or '')] if atom.id == "HXT"]
-        for i in ids:
-            chain[len(ss_value or '')].detach_child(i)
+        for atom in reference.get_atoms():
+            if atom.id == "HXT":
+                atom.get_parent().detach_child(atom.id)
     except KeyError as error:
-        print(f"Error detaching HXT atoms: {error}")
-        # print("No HXT atoms to detach")
+        logger.error(f"Error detaching HXT atoms: {error}")
+
+    # try:
+    #     ids = [atom.id for atom in chain[len(ss_value or '')] if atom.id == "HXT"]
+    #     for i in ids:
+    #         chain[len(ss_value or '')].detach_child(i)
+    # except KeyError as error:
+    #     logger.error(f"Error detaching HXT atoms: {error}")
 
     # Saving the new structure
     io_output = PDBIO()
