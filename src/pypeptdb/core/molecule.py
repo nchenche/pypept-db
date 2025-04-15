@@ -150,11 +150,13 @@ class Molecule:
             at2_new_index = at2 + monomer2['offset']
 
             rgroups_index = [monomer1['m_attachmentPointIdx'].index(at1), monomer2['m_attachmentPointIdx'].index(at2)]
+            is_cyclic = rgroups_index[0] == 0 and rgroups_index[1] == 1
+            is_non_peptidic = rgroups_index[0] in [2, 3] or rgroups_index[1] in [2, 3]
             bounds_data = {
                 'residues': [monomer1['res-idx'], monomer2['res-idx']],
                 'atoms': [at1_new_index, at2_new_index],
                 'rgroups_index': rgroups_index,
-                'bound_type': 'other' if rgroups_index[0] in [2, 3] or rgroups_index[1] in [2, 3] else 'peptide'
+                'bound_type': 'other' if is_non_peptidic or is_cyclic else 'peptide'
             }
             self.bonds.append(bounds_data)
 
