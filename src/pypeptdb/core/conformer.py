@@ -159,8 +159,9 @@ def write_pdb_output(output_name, pdb_mol, ss_value):
         ids = [atom.id for atom in chain[len(ss_value or '')] if atom.id == "HXT"]
         for i in ids:
             chain[len(ss_value or '')].detach_child(i)
-    except KeyError:
-        print("No HXT atoms to detach")
+    except KeyError as error:
+        print(f"Error detaching HXT atoms: {error}")
+        # print("No HXT atoms to detach")
 
     # Saving the new structure
     io_output = PDBIO()
