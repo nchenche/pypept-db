@@ -160,6 +160,48 @@ class Molecule:
             }
             self.bonds.append(bounds_data)
 
+
+    def __update_attach_group_indices(self):
+        """
+        Fixes m_attachmentPointIdx entries for OH groups so they point to the O atom,
+        not the carbon it's attached to. Applies offset to match indices in the full molecule.
+        Stores result in monomer['attachGroupIdx']
+        """
+        for monomer in self.monomers:
+            mol = monomer['m_romol']
+            attach_idxs = monomer['m_attachmentPointIdx']
+            rgroups = monomer['m_Rgroups']
+            offset = monomer['offset']  # this is the offset into the full combined mol
+
+            fixed_idxs = []
+
+            for r_idx, rgroup in enumerate(rgroups):
+                attach_idx = attach_idxs[r_idx]
+
+                if rgroup == 'OH' and attach_idx is not None:
+                    atom = mol.GetAtomWithIdx(attach_idx)
+                    found_oxygen = None
+
+                    for neighbor in atom.GetNeighbors():
+                        if neighbor.GetAtomicNum() == 8:  # Oxygen
+                            bond = mol.GetBondBetweenAtoms(atom.GetIdx(), neighbor.GetIdx())
+                            if bond.GetBondType() == Chem.rdchem.BondType.SINGLE:
+                                h_neighbors = [n for n in neighbor.GetNeighbors() if n.GetAtomicNum() == 1]
+                                if len(h_neighbors) == 1:
+                                    found_oxygen = neighbor.GetIdx()
+                                    break
+
+                    if found_oxygen is not None:
+                        fixed_idxs.append(found_oxygen + offset)
+                    else:
+                        fixed_idxs.append(attach_idx + offset)
+                elif attach_idx is not None:
+                    fixed_idxs.append(attach_idx + offset)
+                else:
+                    fixed_idxs.append(None)
+
+            monomer['attachGroupIdx'] = fixed_idxs
+
     ########################################################################################
     def __fixDihedrals(self):
         """
@@ -297,6 +339,9 @@ class Molecule:
 
         # Step 6: generate bonds data
         self.__generate_bonds_data()
+
+        # Step 7: update the attachment point indices
+        self.__update_attach_group_indices()
 
         # Compute 2D coordinates
         if self.depiction == 'rdkit':
