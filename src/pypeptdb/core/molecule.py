@@ -50,6 +50,8 @@ class Molecule:
         self.offset = []
         self.bondlist = []
         self.monomers = []
+        self.attachment_idx = {}  # dict to store attachment point indices; key is atom index, value is rgroup index
+
         if depiction not in ('rdkit', 'local'):
             raise ValueError(
                 f"Depiction was {depiction}, expected 'rdkit' or 'local'.")
@@ -83,25 +85,47 @@ class Molecule:
         """
         Combine all monomers in a single molecule object.
 
-        Completes internal initialization to prepare an editable molecule.
+        Also records atom offset for each monomer so we can later reapply tags
+        after CombineMols, which strips atom-level properties.
         """
-        mons = self.monomers
+        monomers = self.monomers
 
         mol = [0]
-        for i,val in enumerate(mons):
-            monomer = val['m_romol']
-            residue_idx = f"{val['m_abbr']}-{i}"
-            val.update({'res-idx': residue_idx})
+        offset = 0
+        for i, monomer in enumerate(monomers):
+            molecule = monomer['m_romol']
+            residue_idx = f"{monomer['m_abbr']}-{i}"
+            monomer.update({'res-idx': residue_idx})
+    
+            rgroups = monomer.get('m_Rgroups', [])
+            attach_idxs = monomer.get('m_attachmentPointIdx', [])
 
-            # Set the residue name for each atom    
-            for atom_idx, atom in enumerate(monomer.GetAtoms()):
+            if rgroups and attach_idxs:
+                attach_idx_rgroup = [(attach_idxs[i], rgroup, i) for i, rgroup in enumerate(rgroups) if rgroup]
+
+            if attach_idx_rgroup:
+                for element in attach_idx_rgroup:
+                    atom_idx = element[0]
+                    rgroup = element[1]
+                    atom = molecule.GetAtomWithIdx(atom_idx)
+                    atom.SetProp('rgroup_type', rgroup)
+                    atom.SetProp('rgroup_index', str(element[2]))
+                    atom.SetProp('attachment_index', str(atom_idx))
+                    atom.SetProp('resname', residue_idx)
+                    atom.SetProp('role', 'rgroup_atom')
+                    
+            for atom_idx, atom in enumerate(molecule.GetAtoms()):
                 atom.SetProp('resname', residue_idx)
                 atom.SetProp('orig_idx', str(atom_idx))
 
             if i == 0:
-                mol = monomer
+                mol = molecule
             else:
-                mol = Chem.CombineMols(mol, monomer)
+                mol = Chem.CombineMols(mol, molecule)
+
+            monomer['combine_offset'] = offset  # NEW: store offset before next monomer
+            
+            offset += molecule.GetNumAtoms()
 
         self.mol = Chem.RWMol(mol)
 
@@ -161,46 +185,43 @@ class Molecule:
             self.bonds.append(bounds_data)
 
 
-    def __update_attach_group_indices(self):
+    def __set_attachment_point_indices(self):
         """
-        Fixes m_attachmentPointIdx entries for OH groups so they point to the O atom,
-        not the carbon it's attached to. Applies offset to match indices in the full molecule.
-        Stores result in monomer['attachGroupIdx']
+        Set the attachment point indices for each monomer in the sequence.
+        
+        This is done by looping over all atoms in the molecule and checking
+        if they have the property 'role' set to 'rgroup_atom'. If so, we
+        get the atom properties and set the attachment point index in the
+        attachment_idx dictionary. The key is the atom index and the value
+        is the rgroup index.
+
+        For OH groups, we redefine the attachment point index to be the
+        oxygen atom index, not the carbon it's attached to. This is done
+        by checking the bond type between the rgroup atom and its neighbor
+        oxygen atom. If the bond type is single, we set the attachment
+        point index to the oxygen atom index.        
         """
-        for monomer in self.monomers:
-            mol = monomer['m_romol']
-            attach_idxs = monomer['m_attachmentPointIdx']
-            rgroups = monomer['m_Rgroups']
-            offset = monomer['offset']  # this is the offset into the full combined mol
+        for atom in self.mol.GetAtoms():
+            if not (atom.HasProp('role') and atom.GetProp('role') == 'rgroup_atom'):
+                continue
 
-            fixed_idxs = []
+            # Get the atom properties
+            rgroup_type = atom.GetProp('rgroup_type')
+            rgroup_idx = atom.GetProp('rgroup_index')
+            attach_idx = atom.GetIdx()  # Atom index in the molecule reference, not monomer
 
-            for r_idx, rgroup in enumerate(rgroups):
-                attach_idx = attach_idxs[r_idx]
+            # Redefine the attachment point index for OH groups
+            if rgroup_type == 'OH':
+                attach_idx = None
 
-                if rgroup == 'OH' and attach_idx is not None:
-                    atom = mol.GetAtomWithIdx(attach_idx)
-                    found_oxygen = None
+                for neighbor in atom.GetNeighbors():
+                    if neighbor.GetAtomicNum() == 8:  # Oxygen
+                        bond = self.mol.GetBondBetweenAtoms(atom.GetIdx(), neighbor.GetIdx())
+                        if bond.GetBondType() == Chem.rdchem.BondType.SINGLE:
+                            attach_idx = neighbor.GetIdx()                            
 
-                    for neighbor in atom.GetNeighbors():
-                        if neighbor.GetAtomicNum() == 8:  # Oxygen
-                            bond = mol.GetBondBetweenAtoms(atom.GetIdx(), neighbor.GetIdx())
-                            if bond.GetBondType() == Chem.rdchem.BondType.SINGLE:
-                                h_neighbors = [n for n in neighbor.GetNeighbors() if n.GetAtomicNum() == 1]
-                                if len(h_neighbors) == 1:
-                                    found_oxygen = neighbor.GetIdx()
-                                    break
+            self.attachment_idx[attach_idx] = rgroup_idx
 
-                    if found_oxygen is not None:
-                        fixed_idxs.append(found_oxygen + offset)
-                    else:
-                        fixed_idxs.append(attach_idx + offset)
-                elif attach_idx is not None:
-                    fixed_idxs.append(attach_idx + offset)
-                else:
-                    fixed_idxs.append(None)
-
-            monomer['attachGroupIdx'] = fixed_idxs
 
     ########################################################################################
     def __fixDihedrals(self):
@@ -340,8 +361,9 @@ class Molecule:
         # Step 6: generate bonds data
         self.__generate_bonds_data()
 
-        # Step 7: update the attachment point indices
-        self.__update_attach_group_indices()
+        # Step 7: set attachment point indices
+        self.__set_attachment_point_indices()
+        
 
         # Compute 2D coordinates
         if self.depiction == 'rdkit':
