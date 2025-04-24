@@ -714,6 +714,10 @@ def get_monomer_codes(df_name):
 
 ############################################################
 
+def format_atom_name(name: str) -> str:
+    return f" {name:<3}"
+
+
 def correct_pdb_atoms(seq: Sequence, path=SequenceConstants.def_path,
                       monomer_lib=SequenceConstants.def_lib_filename):
     """
@@ -780,18 +784,30 @@ def correct_pdb_atoms(seq: Sequence, path=SequenceConstants.def_path,
                     atomname = f' {atom.GetSymbol()}{counter} '
             else:
                 # Special case for main capping groups
-                if name in ('ac', 'am'):
-                    if atom.GetSymbol()[0] != 'R':
-                        if names_cap[name][j] == 'CH3':
-                            atomname = f' {names_cap[name][j]}'
+                if name == 'ac':
+                    if atom.GetSymbol() == 'C':
+                        neighbors = [a.GetSymbol() for a in atom.GetNeighbors()]
+                        if 'O' in neighbors:  # Carbonyl carbon
+                            atomname = format_atom_name('C')
+                        elif 'H' in neighbors:  # Methyl carbon
+                            atomname = format_atom_name('CH3')
                         else:
-                            atomname = f' {names_cap[name][j]}  '
-                else:
-                    counter_non += 1
-                    if counter_non < 10:
-                        atomname = f' {atom.GetSymbol()}{counter_non} '
+                            counter_non += 1
+                            atomname = format_atom_name(f'{atom.GetSymbol()}{counter_non}')
+                    elif atom.GetSymbol() == 'O':
+                        atomname = format_atom_name('O')
                     else:
-                        atomname = f' {atom.GetSymbol()}{counter_non}'
+                        counter_non += 1
+                        atomname = format_atom_name(f'{atom.GetSymbol()}{counter_non}')
+                elif name == 'am':
+                    if atom.GetSymbol() == 'N':
+                        atomname = format_atom_name('N')
+                    elif atom.GetSymbol() == 'H':
+                        counter_non += 1
+                        atomname = format_atom_name(f'HN{counter_non}')
+                    else:
+                        counter_non += 1
+                        atomname = format_atom_name(f'{atom.GetSymbol()}{counter_non}')
 
             # Assign the atom object to the peptide molecule
             info = atom.GetPDBResidueInfo()
