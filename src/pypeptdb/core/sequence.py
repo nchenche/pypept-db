@@ -805,9 +805,9 @@ def correct_pdb_atoms(seq: Sequence, path=SequenceConstants.def_path,
                     elif atom.GetSymbol() == 'H':
                         counter_non += 1
                         atomname = format_atom_name(f'HN{counter_non}')
-                    else:
-                        counter_non += 1
-                        atomname = format_atom_name(f'{atom.GetSymbol()}{counter_non}')
+                else:
+                    counter_non += 1
+                    atomname = format_atom_name(f'{atom.GetSymbol()}{counter_non}')
 
             # Assign the atom object to the peptide molecule
             info = atom.GetPDBResidueInfo()
