@@ -35,7 +35,7 @@ dynamic = [
 where = ["src"]
 
 [tool.setuptools.package-data]
-"core.data" = ["*.txt", "*.rst", "*.json", "*.sdf"]
+"pypeptdb.core.data" = ["*.txt", "*.rst", "*.json", "*.sdf"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = "requirements.txt"}
