@@ -1,7 +1,5 @@
 [build-system]
-requires = [
-    "setuptools>=42",
-]
+requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -31,11 +29,18 @@ dynamic = [
     "readme",
 ]
 
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-dir]
+"" = "src"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
+# IMPORTANT: target an actual package, not a plain folder
 [tool.setuptools.package-data]
-"pypeptdb.core.data" = ["*.txt", "*.rst", "*.json", "*.sdf"]
+"pypeptdb.core" = ["data/*.txt", "data/*.rst", "data/*.json", "data/*.sdf"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = "requirements.txt"}
