@@ -152,9 +152,12 @@ class Sequence:
 
                 # Add additional information of the monomers
                 mm_info = self.monomer_df.loc[resname, :].to_dict()
-                mm_value = {'m_name': resname,
-                            'm_name_in_biln': res,
-                            'm_chainID': num_chain}
+                mm_value = {
+                    'm_name': resname,
+                    'm_name_in_biln': res,
+                    'm_chainID': num_chain,
+                    'natural_analog': mm_info['natAnalog']
+                }
                 mm_value.update(mm_info)
 
                 # Append the monomer in the sequence object
@@ -192,7 +195,7 @@ class Sequence:
 
         # Fields required for the addition of the monomer
         keys_needed = ['m_name', 'm_abbr', 'm_name_in_biln', 'm_type',
-                       'm_subtype', 'm_chainID', 'm_Rgroups',
+                       'm_subtype', 'm_chainID', 'm_Rgroups', 'natural_analog',
                        'm_RgroupIdx', 'm_attachmentPointIdx', 'm_romol', 'pdbName']
 
         # check if all necessary keys are available in the monomer definition
