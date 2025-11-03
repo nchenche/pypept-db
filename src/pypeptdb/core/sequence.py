@@ -773,15 +773,15 @@ def correct_pdb_atoms(seq: Sequence, path=SequenceConstants.def_path,
                 if atom.GetIdx() in bb_index:
                     pos = bb_index.index(atom.GetIdx())
                 if pos == 0:
-                    atomname = ' N  '
+                    atomname = format_atom_name('N')
                 elif pos == 1:
-                    atomname = ' CA '
+                    atomname = format_atom_name('CA')
                 elif pos == 2:
-                    atomname = ' C  '
+                    atomname = format_atom_name('C')
                 elif pos == 3:
-                    atomname = ' O  '
+                    atomname = format_atom_name('O')
                 elif pos == 4:
-                    atomname = ' OXT'
+                    atomname = format_atom_name('OXT')
                 else:
                     counter += 1
                     atomname = f' {atom.GetSymbol()}{counter} '
