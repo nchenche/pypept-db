@@ -716,6 +716,48 @@ def get_monomer_codes(df_name):
 
 
 ############################################################
+def _find_backbone_indices(mol):
+    """
+    Return a dict with backbone atom indices for one residue:
+    {'N': iN, 'CA': iCA, 'C': iC, 'O': iO, 'OXT': iOXT or None}
+    If residue isn't an amino acid, returns {}.
+    """
+    # Match N-CA-C(=O) core with labeled atoms
+    patt = Chem.MolFromSmarts("[N:1]-[C:2]-[C:3](=[O:4])")
+    m = mol.GetSubstructMatch(patt)
+    if not m:
+        return {}
+
+    iN, iCA, iC, iOcarbonyl = m  # mapped order in patt
+
+    # Identify a terminal OXT if present:
+    iOXT = None
+    c_atom = mol.GetAtomWithIdx(iC)
+
+    # Check neighbors of the carbonyl carbon
+    has_N_neighbor = False
+    for b in c_atom.GetBonds():
+        nb = b.GetOtherAtom(c_atom)
+        # Carbonyl O already known via SMARTS (=O)
+        if nb.GetIdx() == iOcarbonyl:
+            continue
+        # Peptide/amidation link?
+        if nb.GetAtomicNum() == 7:  # N
+            has_N_neighbor = True
+        # Candidate OXT: single-bond O to the carbonyl carbon
+        if nb.GetAtomicNum() == 8 and b.GetBondType() == Chem.BondType.SINGLE:
+            # Free carboxyl O if it doesn't connect to any heavy atom besides the carbonyl C
+            # i.e., degree 1 (just C) or degree 2 where the other is H
+            heavy_neighbors = [a for a in nb.GetNeighbors() if a.GetAtomicNum() > 1 and a.GetIdx() != iC]
+            if len(heavy_neighbors) == 0:
+                iOXT = nb.GetIdx()
+
+    # If carbonyl C has an N neighbor (peptide/amide/cyclized), we must not name OXT
+    if has_N_neighbor:
+        iOXT = None
+
+    return {"N": iN, "CA": iCA, "C": iC, "O": iOcarbonyl, "OXT": iOXT}
+
 
 def format_atom_name(name: str) -> str:
     return f" {name:<3}"
@@ -734,18 +776,8 @@ def correct_pdb_atoms(seq: Sequence, path=SequenceConstants.def_path,
     # Special case two main N- and C- terminal caps
     names_cap = {'ac': ['CH3', 'C', 'O'], 'am': ['N']}
 
-    # Read the monomer dataframe
-    # default_monomer_df_filepath = files(SequenceConstants.def_path).joinpath(SequenceConstants.def_lib_filename)
-    # monomer_df_filepath = files(path).joinpath(monomer_lib)
-
-    # if monomer_df_filepath.is_file() is False:
-    #     monomer_df_filepath = default_monomer_df_filepath
-
     unique_residues = get_unique_residues(sequence=seq.s_biln)
     new_df = load_sdf_data(from_db=True, residues=unique_residues)
-    # new_df = get_monomer_info(str(monomer_df_filepath), include_res=unique_residues)
-
-    # Get monomer codes
     monomers = get_monomer_codes(new_df)
 
     # Iterate over the monomers
@@ -753,34 +785,31 @@ def correct_pdb_atoms(seq: Sequence, path=SequenceConstants.def_path,
     for i, monomer in enumerate(mm_list):
         mol = monomer['m_romol']
         name = monomer['m_abbr']
-        backbone_smiles = Chem.MolFromSmiles('NCC(=O)')
-        if i == len(mm_list) - 1:
-            backbone_smiles = Chem.MolFromSmiles('NCC(=O)O')
-        backbone_atoms = mol.GetSubstructMatches(backbone_smiles)
-        aa_flag = 0
-        if backbone_atoms:
-            bb_index = list(backbone_atoms[0])
-            type_mon = new_df.loc[new_df['m_abbr'] == name, 'm_type'].item()
-            if type_mon == 'aa':
-                aa_flag = 1
 
-        # Iterate over the atoms
+        # Is amino-acid type?
+        aa_flag = 0
+        type_mon = monomer['m_type']
+        if type_mon == 'aa':
+            aa_flag = 1
+
         counter = 0
         counter_non = 0
+
+        bb = {}
+        if aa_flag == 1:
+            bb = _find_backbone_indices(mol)
+
         for j, atom in enumerate(mol.GetAtoms()):
-            if aa_flag == 1:
-                pos = -1
-                if atom.GetIdx() in bb_index:
-                    pos = bb_index.index(atom.GetIdx())
-                if pos == 0:
+            if aa_flag == 1 and bb:
+                if j == bb["N"]:
                     atomname = format_atom_name('N')
-                elif pos == 1:
+                elif j == bb["CA"]:
                     atomname = format_atom_name('CA')
-                elif pos == 2:
+                elif j == bb["C"]:
                     atomname = format_atom_name('C')
-                elif pos == 3:
+                elif j == bb["O"]:
                     atomname = format_atom_name('O')
-                elif pos == 4:
+                elif bb.get("OXT") is not None and j == bb["OXT"]:
                     atomname = format_atom_name('OXT')
                 else:
                     counter += 1
@@ -814,12 +843,13 @@ def correct_pdb_atoms(seq: Sequence, path=SequenceConstants.def_path,
 
             # Assign the atom object to the peptide molecule
             info = atom.GetPDBResidueInfo()
+            chain_id = string.ascii_uppercase[monomer['m_chainID']] or 'A'
             if info is None:
                 atom.SetMonomerInfo(Chem.AtomPDBResidueInfo(atomName=atomname,
                                                             serialNumber=atom.GetIdx(),
                                                             residueName=f'{monomers[name]}',
                                                             residueNumber=i + 1,
-                                                            chainId="A"))
+                                                            chainId=chain_id))
 
         # Rename atoms using the greek nomenclature
         if aa_flag == 1:
