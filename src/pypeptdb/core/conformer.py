@@ -33,6 +33,7 @@ from rdkit import DataStructs
 from rdkit.Chem.Fingerprints import FingerprintMols
 from rdkit import DistanceGeometry
 from rdkit.Chem import rdDistGeom
+from rdkit.Geometry import Point3D
 
 # Biopython
 from Bio.PDB import PDBParser
@@ -76,6 +77,11 @@ class ConformerConstants:
 
 # End of Conformer class-related constants definition.
 ##########################################################################
+def translate_fragment_inplace(mol, frag_idx, translation):
+    conf = mol.GetConformer()
+    for atom_idx in frag_idx:
+        pos = conf.GetAtomPosition(atom_idx)
+        conf.SetAtomPosition(atom_idx, Point3D(pos.x + translation[0], pos.y + translation[1], pos.z + translation[2]))
 
 def _assign_helical_conformation(ss_value, backbone_atoms, bounds):
     """
@@ -410,6 +416,16 @@ class Conformer:
         # Generate the conformer
         AllChem.EmbedMolecule(romol, parameters)
         # AllChem.UFFOptimizeMolecule(romol)
+
+        fragments = Chem.GetMolFrags(romol, asMols=False, sanitizeFrags=False)
+        if len(fragments) > 1:
+            # Translate fragments apart to avoid clashes
+            translations = [
+                (0.0, 12.50 * i, 0.0) for i in range(len(fragments))
+            ]  # simple linear translation
+            for frag_idx, translation in zip(fragments, translations):
+                translate_fragment_inplace(romol, frag_idx, translation)
+
         pdb_mol = Chem.MolToPDBBlock(romol)
 
         # Store the conformer in a new pdb file
