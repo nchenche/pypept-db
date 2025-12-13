@@ -414,18 +414,7 @@ class Conformer:
             parameters.useRandomCoords = True
 
         # Generate the conformer
-        AllChem.EmbedMolecule(romol, parameters)
-        # AllChem.UFFOptimizeMolecule(romol)
-
-        fragments = Chem.GetMolFrags(romol, asMols=False, sanitizeFrags=False)
-        if len(fragments) > 1:
-            # Translate fragments apart to avoid clashes
-            translations = [
-                (0.0, 12.50 * i, 0.0) for i in range(len(fragments))
-            ]  # simple linear translation
-            for frag_idx, translation in zip(fragments, translations):
-                translate_fragment_inplace(romol, frag_idx, translation)
-
+        AllChem.EmbedMolecule(romol, parameters)        
         pdb_mol = Chem.MolToPDBBlock(romol)
 
         # Store the conformer in a new pdb file
