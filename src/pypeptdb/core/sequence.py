@@ -616,7 +616,7 @@ def greekify(mol, name_aa):
                 new_name = f"{atom.GetSymbol()}{greek[k]}{list_atom[i]}"
                 if name_aa in fix_aa:
                     if new_name in fix_aa[name_aa]:
-                        if name_aa != "P":
+                        if name_aa != "P" and name_aa != 'dP':
                             digit = fix_aa[name_aa][new_name][-1]
                             name = f"{atom.GetSymbol(): >2}{greek[k]}{digit}"
                         else:
@@ -886,6 +886,92 @@ def correct_pdb_atoms(
             greekify(mol, name)
 
     return seq
+
+
+def correct_pdb_residue_names(pdb_file):
+    """
+    Remplace les noms de résidus abrégés par leurs noms complets dans un fichier PDB.
+    Cela permet d'utiliser les colonnes 17-20 pour le nom du résidu au lieu de 18-20.
+
+    :param pdb_file: Chemin vers le fichier PDB à corriger
+    :type pdb_file: str
+    """
+    with open(pdb_file, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+
+    corrected_lines = []
+    for line in lines:
+        if line.startswith('ATOM'):
+            # Récupérer le nom du résidu (colonne 17-20)
+            residue_name = line[17:20]
+            if residue_name == 'DA0':
+                # Remplacer DA0 par DALA et ajuster les positions
+                new_line = line[:16] + 'DALA' + line[20:]
+                corrected_lines.append(new_line)
+            elif residue_name == 'DC6':
+                new_line = line[:16] + 'DCYS' + line[20:]
+                corrected_lines.append(new_line)
+            elif residue_name == 'DD0':
+                new_line = line[:16] + 'DASP' + line[20:]
+                corrected_lines.append(new_line)
+            elif residue_name == 'DEK':
+                new_line = line[:16] + 'DGLU' + line[20:]
+                corrected_lines.append(new_line)
+            elif residue_name == 'DBL':
+                new_line = line[:16] + 'DPHE' + line[20:]
+                corrected_lines.append(new_line)
+            elif residue_name == 'DHW':
+                new_line = line[:16] + 'DHIS' + line[20:]
+                corrected_lines.append(new_line)
+            elif residue_name == 'DC9':
+                new_line = line[:16] + 'DARG' + line[20:]
+                corrected_lines.append(new_line)
+            elif residue_name == 'DIJ':
+                new_line = line[:16] + 'DILE' + line[20:]
+                corrected_lines.append(new_line)
+            elif residue_name == 'DKB':
+                new_line = line[:16] + 'DLYS' + line[20:]
+                corrected_lines.append(new_line)
+            elif residue_name == 'DLO':
+                new_line = line[:16] + 'DLEU' + line[20:]
+                corrected_lines.append(new_line)
+            elif residue_name == 'DB2':
+                new_line = line[:16] + 'DMET' + line[20:]
+                corrected_lines.append(new_line)
+            elif residue_name == 'DNI':
+                new_line = line[:16] + 'DASN' + line[20:]
+                corrected_lines.append(new_line)
+            elif residue_name == 'DPI':
+                new_line = line[:16] + 'DPRO' + line[20:]
+                corrected_lines.append(new_line)
+            elif residue_name == 'DQC':
+                new_line = line[:16] + 'DGLN' + line[20:]
+                corrected_lines.append(new_line)
+            elif residue_name == 'DSW':
+                new_line = line[:16] + 'DSER' + line[20:]
+                corrected_lines.append(new_line)
+            elif residue_name == 'DE8':
+                new_line = line[:16] + 'DTHR' + line[20:]
+                corrected_lines.append(new_line)
+            elif residue_name == 'DVB':
+                new_line = line[:16] + 'DVAL' + line[20:]
+                corrected_lines.append(new_line)
+            elif residue_name == 'DWI':
+                new_line = line[:16] + 'DTRP' + line[20:]
+                corrected_lines.append(new_line)
+            elif residue_name == 'DYE':
+                new_line = line[:16] + 'DTYR' + line[20:]
+                corrected_lines.append(new_line)
+            else:
+                corrected_lines.append(line)
+        else:
+            corrected_lines.append(line)
+
+    # Réécrire le fichier avec les corrections
+    with open(pdb_file, 'w', encoding='utf-8') as f:
+        f.writelines(corrected_lines)
+
+
 
 ############################################################
 # End of sequence.py
