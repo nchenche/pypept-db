@@ -549,27 +549,44 @@ def greekify(mol, name_aa):
     """
 
     # Some local fixes to name correctly the natural amino acids if required
-    fix_aa = {'W': {'CE1': 'CE2', 'NE2': 'NE1', 'CZ1': 'CZ3', 'CH': 'CH2',
-                    'CD1': 'CD2', 'CD2': 'CD1'},
-              'N': {'OD2': 'OD1', 'ND1': 'ND2'},
-              'I': {'CD': 'CD1', 'CG1': 'CG2', 'CG2': 'CG1'},
-              'T': {'OG2': 'OG1', 'CG1': 'CG2'},
-              'P': {'CG2': 'CG', 'CG1': 'CD'}}
+    fix_aa = {
+        "W": {
+            "CE1": "CE2",
+            "NE2": "NE1",
+            "CZ2": "CZ3",
+            "CZ1": "CZ2",
+            "CH": "CH2",
+            "CD1": "CD2",
+            "CD2": "CD1",
+        },  # "W": {"CE1": "CE2", "NE2": "NE1", "CZ1": "CZ3", "CH": "CH2", "CD1": "CD2", "CD2": "CD1"},
+        "N": {"OD2": "OD1", "ND1": "ND2"},        
+        "I": {"CD": "CD1"},  # "I": {"CD": "CD1", "CG1": "CG2", "CG2": "CG1"},
+        "T": {"OG2": "OG1", "CG1": "CG2"},
+        "P": {"CG2": "CG", "CG1": "CD"},
+        # Corrections pour GROMACS from C.Ye
+        "Q": {"NE1": "NE2", "OE2": "OE1"},  # Glutamine
+        "H": {"CD1": "CD2", "NE1": "NE2", "CE2": "CE1", "ND2": "ND1"},  # Histidine
+    }
 
-    greek = list('ABGDEZHTIKLMNXOPRS')
+    # Update fix_aa dict by adding key/values for D-amino acids (starting with 'd')
+    d_amino_acids = [key for key in fix_aa.keys() if len(key) == 1 and key.isupper()]
+    for aa in d_amino_acids:
+        d_aa = "d" + aa
+        fix_aa[d_aa] = fix_aa[aa]
+
+    greek = list("ABGDEZHTIKLMNXOPRS")
     greekdex = defaultdict(list)
-    ca_atom = get_atom_by_name(mol, 'CA')
+    ca_atom = get_atom_by_name(mol, "CA")
 
     # Recognize if the atom is not part of the backbone
     for atom in mol.GetAtoms():
-        is_backbone = (atom.GetPDBResidueInfo() is not None and
-                       atom.GetPDBResidueInfo().GetName().strip() in (
-                           'LOWER', 'UPPER', 'N', 'CA', 'C', 'H', 'HA', 'O',
-                           'OXT'))
-        if atom.GetSymbol() != 'H' and atom.GetSymbol()[
-            0] != 'R' and not is_backbone:
-            n_atom = len(
-                Chem.GetShortestPath(mol, ca_atom.GetIdx(), atom.GetIdx())) - 1
+        is_backbone = (
+            atom.GetPDBResidueInfo() is not None
+            and atom.GetPDBResidueInfo().GetName().strip()
+            in ("LOWER", "UPPER", "N", "CA", "C", "H", "HA", "O", "OXT")
+        )
+        if atom.GetSymbol() != "H" and atom.GetSymbol()[0] != "R" and not is_backbone:
+            n_atom = len(Chem.GetShortestPath(mol, ca_atom.GetIdx(), atom.GetIdx())) - 1
             greekdex[n_atom].append(atom)
 
     # Iterate over the list of atoms and the greek letters
@@ -580,15 +597,15 @@ def greekify(mol, name_aa):
             pass
         elif len(greekdex[k]) == 1:
             # Special case
-            new_name = f'{greekdex[k][0].GetSymbol()}{greek[k]}'
+            new_name = f"{greekdex[k][0].GetSymbol()}{greek[k]}"
             if name_aa in fix_aa:
                 if new_name in fix_aa[name_aa]:
                     digit = fix_aa[name_aa][new_name][-1]
-                    name = f'{greekdex[k][0].GetSymbol(): >2}{greek[k]}{digit}'
+                    name = f"{greekdex[k][0].GetSymbol(): >2}{greek[k]}{digit}"
                 else:
-                    name = f'{greekdex[k][0].GetSymbol(): >2}{greek[k]} '
+                    name = f"{greekdex[k][0].GetSymbol(): >2}{greek[k]} "
             else:
-                name = f'{greekdex[k][0].GetSymbol(): >2}{greek[k]} '
+                name = f"{greekdex[k][0].GetSymbol(): >2}{greek[k]} "
 
             greekdex[k][0].GetPDBResidueInfo().SetName(name)
 
@@ -596,19 +613,19 @@ def greekify(mol, name_aa):
             list_atom = list(string.digits + string.ascii_uppercase)[1:]
             for i, atom in enumerate(greekdex[k]):
 
-                new_name = f'{atom.GetSymbol()}{greek[k]}{list_atom[i]}'
+                new_name = f"{atom.GetSymbol()}{greek[k]}{list_atom[i]}"
                 if name_aa in fix_aa:
                     if new_name in fix_aa[name_aa]:
-                        if name_aa != 'P':
+                        if name_aa != "P":
                             digit = fix_aa[name_aa][new_name][-1]
-                            name = f'{atom.GetSymbol(): >2}{greek[k]}{digit}'
+                            name = f"{atom.GetSymbol(): >2}{greek[k]}{digit}"
                         else:
                             digit = fix_aa[name_aa][new_name][-1]
-                            name = f'{atom.GetSymbol(): >2}{digit} '
+                            name = f"{atom.GetSymbol(): >2}{digit} "
                     else:
-                        name = f'{atom.GetSymbol(): >2}{greek[k]}{list_atom[i]}'
+                        name = f"{atom.GetSymbol(): >2}{greek[k]}{list_atom[i]}"
                 else:
-                    name = f'{atom.GetSymbol(): >2}{greek[k]}{list_atom[i]}'
+                    name = f"{atom.GetSymbol(): >2}{greek[k]}{list_atom[i]}"
 
                 greekdex[k][i].GetPDBResidueInfo().SetName(name)
 
@@ -748,7 +765,11 @@ def _find_backbone_indices(mol):
         if nb.GetAtomicNum() == 8 and b.GetBondType() == Chem.BondType.SINGLE:
             # Free carboxyl O if it doesn't connect to any heavy atom besides the carbonyl C
             # i.e., degree 1 (just C) or degree 2 where the other is H
-            heavy_neighbors = [a for a in nb.GetNeighbors() if a.GetAtomicNum() > 1 and a.GetIdx() != iC]
+            heavy_neighbors = [
+                a
+                for a in nb.GetNeighbors()
+                if a.GetAtomicNum() > 1 and a.GetIdx() != iC
+            ]
             if len(heavy_neighbors) == 0:
                 iOXT = nb.GetIdx()
 
@@ -763,8 +784,11 @@ def format_atom_name(name: str) -> str:
     return f" {name:<3}"
 
 
-def correct_pdb_atoms(seq: Sequence, path=SequenceConstants.def_path,
-                      monomer_lib=SequenceConstants.def_lib_filename):
+def correct_pdb_atoms(
+    seq: Sequence,
+    path=SequenceConstants.def_path,
+    monomer_lib=SequenceConstants.def_lib_filename,
+):
     """
     Pipeline to assign the correct atom names to the pyPept object
 
@@ -774,7 +798,7 @@ def correct_pdb_atoms(seq: Sequence, path=SequenceConstants.def_path,
     """
 
     # Special case two main N- and C- terminal caps
-    names_cap = {'ac': ['CH3', 'C', 'O'], 'am': ['N']}
+    names_cap = {"ac": ["CH3", "C", "O"], "am": ["N"]}
 
     unique_residues = get_unique_residues(sequence=seq.s_biln)
     new_df = load_sdf_data(from_db=True, residues=unique_residues)
@@ -783,13 +807,13 @@ def correct_pdb_atoms(seq: Sequence, path=SequenceConstants.def_path,
     # Iterate over the monomers
     mm_list = seq.s_monomers
     for i, monomer in enumerate(mm_list):
-        mol = monomer['m_romol']
-        name = monomer['m_abbr']
+        mol = monomer["m_romol"]
+        name = monomer["m_abbr"]
 
         # Is amino-acid type?
         aa_flag = 0
-        type_mon = monomer['m_type']
-        if type_mon == 'aa':
+        type_mon = monomer["m_type"]
+        if type_mon == "aa":
             aa_flag = 1
 
         counter = 0
@@ -802,62 +826,66 @@ def correct_pdb_atoms(seq: Sequence, path=SequenceConstants.def_path,
         for j, atom in enumerate(mol.GetAtoms()):
             if aa_flag == 1 and bb:
                 if j == bb["N"]:
-                    atomname = format_atom_name('N')
+                    atomname = format_atom_name("N")
                 elif j == bb["CA"]:
-                    atomname = format_atom_name('CA')
+                    atomname = format_atom_name("CA")
                 elif j == bb["C"]:
-                    atomname = format_atom_name('C')
+                    atomname = format_atom_name("C")
                 elif j == bb["O"]:
-                    atomname = format_atom_name('O')
+                    atomname = format_atom_name("O")
                 elif bb.get("OXT") is not None and j == bb["OXT"]:
-                    atomname = format_atom_name('OXT')
+                    atomname = format_atom_name("OXT")
                 else:
                     counter += 1
-                    atomname = f' {atom.GetSymbol()}{counter} '
+                    atomname = f" {atom.GetSymbol()}{counter} "
             else:
                 # Special case for main capping groups
-                if name == 'ac':
-                    if atom.GetSymbol() == 'C':
+                if name == "ac":
+                    if atom.GetSymbol() == "C":
                         neighbors = [a.GetSymbol() for a in atom.GetNeighbors()]
-                        if 'O' in neighbors:  # Carbonyl carbon
-                            atomname = format_atom_name('C')
-                        elif 'H' in neighbors:  # Methyl carbon
-                            atomname = format_atom_name('CH3')
+                        if "O" in neighbors:  # Carbonyl carbon
+                            atomname = format_atom_name("C")
+                        elif "H" in neighbors:  # Methyl carbon
+                            atomname = format_atom_name("CH3")
                         else:
                             counter_non += 1
-                            atomname = format_atom_name(f'{atom.GetSymbol()}{counter_non}')
-                    elif atom.GetSymbol() == 'O':
-                        atomname = format_atom_name('O')
+                            atomname = format_atom_name(
+                                f"{atom.GetSymbol()}{counter_non}"
+                            )
+                    elif atom.GetSymbol() == "O":
+                        atomname = format_atom_name("O")
                     else:
                         counter_non += 1
-                        atomname = format_atom_name(f'{atom.GetSymbol()}{counter_non}')
-                elif name == 'am':
-                    if atom.GetSymbol() == 'N':
-                        atomname = format_atom_name('N')
-                    elif atom.GetSymbol() == 'H':
+                        atomname = format_atom_name(f"{atom.GetSymbol()}{counter_non}")
+                elif name == "am":
+                    if atom.GetSymbol() == "N":
+                        atomname = format_atom_name("N")
+                    elif atom.GetSymbol() == "H":
                         counter_non += 1
-                        atomname = format_atom_name(f'HN{counter_non}')
+                        atomname = format_atom_name(f"HN{counter_non}")
                 else:
                     counter_non += 1
-                    atomname = format_atom_name(f'{atom.GetSymbol()}{counter_non}')
+                    atomname = format_atom_name(f"{atom.GetSymbol()}{counter_non}")
 
             # Assign the atom object to the peptide molecule
             info = atom.GetPDBResidueInfo()
-            chain_id = string.ascii_uppercase[monomer['m_chainID']] or 'A'
+            chain_id = string.ascii_uppercase[monomer["m_chainID"]] or "A"
             if info is None:
-                atom.SetMonomerInfo(Chem.AtomPDBResidueInfo(atomName=atomname,
-                                                            serialNumber=atom.GetIdx(),
-                                                            residueName=f'{monomers[name]}',
-                                                            residueNumber=i + 1,
-                                                            chainId=chain_id))
+                atom.SetMonomerInfo(
+                    Chem.AtomPDBResidueInfo(
+                        atomName=atomname,
+                        serialNumber=atom.GetIdx(),
+                        residueName=f"{monomers[name]}",
+                        residueNumber=i + 1,
+                        chainId=chain_id,
+                    )
+                )
 
         # Rename atoms using the greek nomenclature
         if aa_flag == 1:
             greekify(mol, name)
 
     return seq
-
-    # end of definition of correct_pdb_atoms()
 
 ############################################################
 # End of sequence.py

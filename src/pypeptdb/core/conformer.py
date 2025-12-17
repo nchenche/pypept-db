@@ -310,7 +310,7 @@ class Conformer:
         # For each heavy atom count the number of hydrogens present and store in numH
         for atom in romol.GetAtoms():
 
-            if atom.GetSymbol() != 'H':
+            if atom.GetSymbol() != "H":
                 idx = atom.GetIdx()
                 name = atom.GetPDBResidueInfo().GetName()
                 i_h = atom.GetTotalNumHs(includeNeighbors=True)
@@ -320,7 +320,7 @@ class Conformer:
                     count_hydrogens[idx] = 0
                 else:
                     count_hydrogens[idx] = 1
-                    if name.strip() in ['NH1', 'NH2']:
+                    if name.strip() in ["NH1", "NH2"]:
                         count_hydrogens[idx] = 0
 
         # For each hydrogen, get the name of the atom and modify its own name
@@ -342,13 +342,13 @@ class Conformer:
                     count_hydrogens[idx] = count_hydrogens[idx] + 1
                     number = str(count_hydrogens[idx])
                 else:
-                    if heavyname_full.strip() in ['NH1', 'NH2']:
+                    if heavyname_full.strip() in ["NH1", "NH2"]:
                         number = "1"
                     else:
                         number = ""
 
-                atomname = 'H' + heavyname + number
-                atomname = f'{atomname:>4}'
+                atomname = "H" + heavyname + number
+                atomname = f"{atomname:>4}"
                 atom.GetPDBResidueInfo().SetName(atomname)
 
 
