@@ -24,6 +24,7 @@ import warnings
 import math
 import os
 import sys
+import json
 from importlib.resources import files
 
 # RDKit modules
@@ -60,12 +61,18 @@ class ConformerConstants:
     A class to hold defaults values related to pypeptdb.core.Conformer objects.
     """
     def_path = "pypeptdb.core.data"
+    def_conversion_dict = "conversion_dict.json" # for the hydrogen atom names conversion
     def_matrix_filename = "matrix.txt"
     def_ss_filename = 'total_SS.txt'
     aminoacids = {"ALA": "A", "ASP": "D", "GLU": "E", "PHE": "F", "HIS": "H",
                   "ILE": "I", "LYS": "K", "LEU": "L", "MET": "M", "GLY": "G",
                   "ASN": "N", "PRO": "P", "GLN": "Q", "ARG": "R", "SER": "S",
                   "THR": "T", "VAL": "V", "TRP": "W", "TYR": "Y", "CYS": "C"}
+    aminoacids_D = {"DA0": "dA", "DD0": "dD", "DEK": "dE", "DBL": "dF", "DHW": "dH",
+                    "DIJ": "dI", "DKB": "dK", "DLO": "dL", "DB2": "dM", "DNI": "dN",
+                    "DPI": "dP", "DQC": "dQ", "DC9": "dR", "DSW": "dS", "DE8": "dT",
+                    "DVB": "dV", "DWI": "dW", "DYE": "dY", "DC6": "dC"}
+    aminoacids_all = {**aminoacids, **aminoacids_D}
     coil_symbol = "C"
     helix_symbol = "H"
     sheet_symbol = "E"
@@ -302,6 +309,36 @@ class Conformer:
         :param romol: RDKit molecule object
         :type romol: RDKit molecule
         """
+        """
+        path=ConformerConstants.def_path,
+        matrix_lib=ConformerConstants.def_matrix_filename
+        matrix_lib_filepath = files(path).joinpath(matrix_lib)
+
+        if matrix_lib_filepath.is_file() is False:
+            matrix_lib_filepath = default_matrix_lib_filepath
+        """
+        # Charger le dictionnaire de conversion
+        path=ConformerConstants.def_path
+        conversion_dict_filepath = files(path).joinpath(ConformerConstants.def_conversion_dict)
+        try:
+            with open(conversion_dict_filepath, 'r') as f:
+                HYDROGEN_NAME_CONVERSION = json.load(f)
+        except FileNotFoundError:
+            warnings.warn("File conversion_dict.json not found. The hydrogen names will not be converted.")
+            HYDROGEN_NAME_CONVERSION = {}
+
+        # Dictionnaire pour convertir les codes 3 lettres -> 1 lettre
+        aa_three_to_one = ConformerConstants.aminoacids_all
+
+        # Liste des hydrogènes à exclure pour certains résidus
+        # # Pour Asp (D) et dD : exclure HD2 (attaché à OD2)
+        # # Pour Glu (E) et dE : exclure HE2 (attaché à OE2)
+        residues_to_exclude = {
+        "ASP": ["HD2"],  # Aspartate L
+        "DD0": ["HD2"],  # Aspartate D
+        "GLU": ["HE2"],  # Glutamate L
+        "DEK": ["HE2"],  # Glutamate D
+        }
 
         # Check the number of hydrogens at each heavy atom
         num_hydrogens = [None] * romol.GetNumAtoms()
@@ -324,6 +361,7 @@ class Conformer:
                         count_hydrogens[idx] = 0
 
         # For each hydrogen, get the name of the atom and modify its own name
+        atoms_to_remove = []
         for atom in romol.GetAtoms():
             if atom.GetSymbol() == "H":
                 bond = atom.GetBonds()[0]
@@ -348,8 +386,52 @@ class Conformer:
                         number = ""
 
                 atomname = "H" + heavyname + number
+
+                # Obtenir le résidu (code 3 lettres) et le convertir en 1 lettre
+                resname = heavy.GetPDBResidueInfo().GetResidueName().strip()
+
+                 # Vérifier si cet hydrogène doit être exclu
+                exclude_hydrogens = residues_to_exclude.get(resname, [])
+                if atomname.strip() in exclude_hydrogens:
+                    # Marquer cet atome pour suppression
+                    atoms_to_remove.append(atom.GetIdx())
+                    print("atomname.strip() in exclude_hydrogens")
+                    continue
+
+                # Convertir 3 lettres -> 1 lettre
+                one_letter_code = aa_three_to_one.get(resname, None)
+
+                 # Appliquer la conversion si disponible
+                if one_letter_code and one_letter_code in HYDROGEN_NAME_CONVERSION:
+                    residue_dict = HYDROGEN_NAME_CONVERSION[one_letter_code]
+
+                    # Chercher d'abord une correspondance exacte
+                    if atomname.strip() in residue_dict:
+                        atomname = residue_dict[atomname.strip()]
+
+                    # Chercher ensuite une correspondance avec numéro au début
+                    elif number and atomname.strip().endswith(number):
+                        print("atomname=", atomname)
+                        print("not in residue_dict")
+
+                        # Essayer de reformater le nom (ex: HB1 -> 1HB)
+                        base_name = atomname.strip()[:-len(number)]
+                        alternative_name = f"{number}{base_name}"
+                        if alternative_name in residue_dict:
+                            atomname = residue_dict[alternative_name]
+
                 atomname = f"{atomname:>4}"
                 atom.GetPDBResidueInfo().SetName(atomname)
+
+        # Créer une version RWMol pour pouvoir supprimer les atomes
+        rw_mol = Chem.RWMol(romol)
+
+        # Supprimer les atomes d'hydrogène qui ne doivent pas être dans le PDB
+        for idx in sorted(atoms_to_remove, reverse=True):
+            rw_mol.RemoveAtom(idx)
+
+        # utile ??
+        return Chem.Mol(rw_mol)
 
 
     @staticmethod

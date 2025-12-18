@@ -31,6 +31,7 @@ from rdkit.Chem import Draw
 # PyPept modules
 from pypeptdb.core.sequence import Sequence
 from pypeptdb.core.sequence import correct_pdb_atoms
+from pypeptdb.core.sequence import correct_pdb_residue_names
 from pypeptdb.core.converter import Converter
 from pypeptdb.core.molecule import Molecule
 from pypeptdb.core.conformer import Conformer, ConformerConstants, SecStructPredictor
@@ -244,6 +245,8 @@ def main():
                 print(f"The provided Secondary Structure is: {ss_input}")
 
         romol = Conformer.generate_conformer(romol, ss_value=ss_input, generate_pdb=True, output_name=args.prefix)
+        # Corriger les noms de résidus en forme D
+        correct_pdb_residue_names(f'{args.prefix}.pdb')
         outFileList.append(f'{args.prefix}.pdb')
     
     ########################################
