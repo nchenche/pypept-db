@@ -411,7 +411,7 @@ class Conformer:
 
                     # Chercher ensuite une correspondance avec numéro au début
                     elif number and atomname.strip().endswith(number):
-                        print("atomname=", atomname)
+                        print("atomname=", atomname, " resname=", resname)
                         print("not in residue_dict")
 
                         # Essayer de reformater le nom (ex: HB1 -> 1HB)
